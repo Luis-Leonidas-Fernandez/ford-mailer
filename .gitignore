@@ -13,6 +13,9 @@
 .env.production
 .env.staging
 
+# IMPORTANTE: .env.example SÍ se debe subir a Git (contiene valores de ejemplo)
+!.env.example
+
 # Archivos de configuración con credenciales
 config/secrets.json
 config/credentials.json

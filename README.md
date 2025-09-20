@@ -329,7 +329,11 @@ npm install
 ```
 
 ### 2. Configuración
-Copia el archivo `.env.example` a `.env` y configura las variables necesarias.
+```bash
+# Copia el archivo de ejemplo y configura tus variables
+cp .env.example .env
+# Luego edita .env con tus credenciales reales
+```
 
 ### 3. Iniciar Redis
 ```bash
