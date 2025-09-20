@@ -1,0 +1,13 @@
+{{subject}}
+
+Hola {{recipientName}},
+
+Promociones destacadas:
+{{#each promos}}
+- {{this.titulo}} — {{this.descripcion}} — {{this.precio}}{{#if this.url}} ({{this.url}}){{/if}}
+{{/each}}
+
+Contactar por WhatsApp: {{waLink}}
+Desuscribirse: {{unsubscribeUrl}}
+
+{{dealershipName}} · {{#if dealershipAddress}}{{dealershipAddress}} · {{/if}}{{contactPhone}}

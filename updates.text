@@ -1,0 +1,303 @@
+¡Excelente pregunta! Te explico estos dos conceptos importantes para el futuro de tu proyecto:
+
+
+🏢 Multi-tenant: Soporte para Múltiples Concesionarios
+¿Qué significa Multi-tenant?
+
+Multi-tenancy es una arquitectura donde una sola instancia de tu aplicación sirve a múltiples
+clientes (concesionarios) de forma aislada y segura.
+
+🎯 En tu contexto Ford Mailer:
+Actualmente tu sistema está diseñado para un solo concesionario.
+Con multi-tenancy podrías servir a:
+
+Concesionario Ford Buenos Aires
+Concesionario Ford Córdoba
+Concesionario Ford Mendoza
+Concesionario Chevrolet Rosario
+etc.
+
+
+
+🔧 Implementación Técnica:
+
+// Estructura actual (single-tenant)
+
+const config = {
+  dealershipName: 'INRI Company Motors',
+  dealershipAddress: 'Av. Siempreviva 742, Córdoba',
+  contactPhone: '+54 351 555-1234'
+}
+
+// Estructura multi-tenant propuesta
+
+const tenants = {
+  'ford-cba': {
+    dealershipName: 'Ford Córdoba',
+    dealershipAddress: 'Av. Colón 1234, Córdoba',
+    contactPhone: '+54 351 555-1234',
+    brandColors: { primary: '#0b2a4a', secondary: '#c7d3e1' },
+    logo: 'https://cdn.ford-cba.com/logo.png',
+    emailProvider: 'resend',
+    apiKeys: { resend: 'key_ford_cba_123' }
+  },
+  'ford-bsas': {
+    dealershipName: 'Ford Buenos Aires',
+    dealershipAddress: 'Av. Corrientes 5678, CABA',
+    contactPhone: '+54 11 555-9876',
+    brandColors: { primary: '#1a365d', secondary: '#e2e8f0' },
+    logo: 'https://cdn.ford-bsas.com/logo.png',
+    emailProvider: 'gmail',
+    apiKeys: { gmail: { clientId: '...', clientSecret: '...' } }
+  }
+}
+
+
+🗄️ Base de Datos Multi-tenant:
+
+
+// Tabla de campañas con tenant_id
+campaigns: {
+  id: 'camp_123',
+  tenant_id: 'ford-cba',  // 👈 Clave del tenant
+  name: 'Promo Ranger Marzo',
+  status: 'active',
+  created_at: '2024-03-01'
+}
+
+// Tabla de contactos por tenant
+contacts: {
+  id: 'contact_456',
+  tenant_id: 'ford-cba',  // 👈 Aislamiento por tenant
+  email: 'cliente@example.com',
+  name: 'Juan Pérez'
+}
+
+
+
+💰 Beneficios Comerciales:
+Escalabilidad: Un sistema → múltiples clientes
+Costos reducidos: Infraestructura compartida
+Ingresos recurrentes: SaaS mensual por concesionario
+Mantenimiento centralizado: Una actualización → todos los clientes
+🔌 API REST: Para Integraciones Externas
+¿Qué es una API REST?
+Una API REST es una interfaz que permite que otros sistemas se conecten y usen tu Ford Mailer de forma programática.
+🎯 Casos de Uso Reales:
+1. Sistema de Gestión del Concesionario (DMS)
+
+
+
+// El DMS del concesionario envía recordatorios automáticamente
+
+POST /api/v1/campaigns/reminders
+{
+  "tenant_id": "ford-cba",
+  "customer": {
+    "email": "cliente@example.com",
+    "name": "Juan Pérez",
+    "vehicle": "Ranger XLT 2024"
+  },
+  "appointment": {
+    "date": "2024-03-15",
+    "time": "10:30",
+    "type": "service"
+  }
+}
+
+
+// El CRM lanza campañas promocionales
+
+POST /api/v1/campaigns/promotions
+{
+  "tenant_id": "ford-cba",
+  "campaign_name": "Promoción Marzo 2024",
+  "contacts": [
+    { "email": "cliente1@example.com", "name": "Ana García" },
+    { "email": "cliente2@example.com", "name": "Carlos López" }
+  ],
+  "promotions": [
+    {
+      "title": "Ford Ranger XLT",
+      "description": "Financiación especial",
+      "price": "USD 32.500"
+    }
+  ]
+}
+/**
+
+3. Website del Concesionario
+
+// El website programa recordatorios de test drive
+
+POST /api/v1/campaigns/test-drive
+{
+  "tenant_id": "ford-cba",
+  "customer": {
+    "email": "interesado@example.com",
+    "name": "María Rodríguez"
+  },
+  "vehicle_interest": "Mustang Mach-E",
+  "test_drive_date": "2024-03-20"
+}
+
+
+4. Sistema de Inventario
+
+// Cuando llega un vehículo esperado, notifica al cliente
+
+POST /api/v1/campaigns/vehicle-arrival
+{
+  "tenant_id": "ford-cba",
+  "customer": {
+    "email": "esperando@example.com",
+    "name": "Roberto Silva"
+  },
+  "vehicle": {
+    "model": "F-150 Lightning",
+    "color": "Azul Metálico",
+    "arrival_date": "2024-03-25"
+  }
+}
+
+🔧 Implementación de la API:
+
+// api/routes/campaigns.js
+
+import express from 'express';
+import { authenticateTenant } from '../middleware/auth.js';
+import { runFordCampaign } from '../mailer/campaign/core.js';
+
+const router = express.Router();
+
+
+
+// Middleware de autenticación por tenant
+router.use(authenticateTenant);
+
+
+
+// Endpoint para enviar recordatorios
+router.post('/reminders', async (req, res) => {
+  try {
+    const { tenant_id } = req.tenant;
+    const { customer, appointment } = req.body;
+    
+    // Obtener configuración del tenant
+    const tenantConfig = await getTenantConfig(tenant_id);
+    
+    // Enviar recordatorio personalizado
+    const result = await sendReminder({
+      to: customer.email,
+      template: 'service-reminder',
+      context: {
+        recipientName: customer.name,
+        vehicleModel: customer.vehicle,
+        appointmentDate: appointment.date,
+        appointmentTime: appointment.time,
+        ...tenantConfig
+      }
+    });
+    
+    res.json({ success: true, messageId: result.messageId });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+
+
+// Endpoint para campañas promocionales
+router.post('/promotions', async (req, res) => {
+  try {
+    const { tenant_id } = req.tenant;
+    const { campaign_name, contacts, promotions } = req.body;
+    
+    const tenantConfig = await getTenantConfig(tenant_id);
+    
+    // Ejecutar campaña promocional
+    await runFordCampaign({
+      contacts: contactsFromArray(contacts),
+      promos: promotions,
+      vendor: tenantConfig.vendor,
+      campaign: {
+        subject: campaign_name,
+        ...tenantConfig.campaign
+      }
+    });
+    
+    res.json({ success: true, message: 'Campaña iniciada' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+export default router;
+
+
+🔐 Autenticación de la API:
+
+// middleware/auth.js
+
+export async function authenticateTenant(req, res, next) {
+  const apiKey = req.headers['x-api-key'];
+  const tenantId = req.headers['x-tenant-id'];
+  
+  if (!apiKey || !tenantId) {
+    return res.status(401).json({ error: 'API key y tenant ID requeridos' });
+  }
+
+  
+  // Verificar que la API key pertenece al tenant
+
+  const tenant = await validateTenantApiKey(tenantId, apiKey);
+  if (!tenant) {
+    return res.status(403).json({ error: 'API key inválida' });
+  }
+  
+  req.tenant = tenant;
+  next();
+}
+
+
+
+
+📊 Dashboard de API:
+
+// Endpoint para estadísticas
+GET /api/v1/stats/campaigns
+Headers: 
+  X-API-Key: ford_cba_api_key_123
+  X-Tenant-ID: ford-cba
+
+Response:
+{
+  "campaigns_sent": 1250,
+  "emails_delivered": 1180,
+  "open_rate": "68%",
+  "click_rate": "12%",
+  "whatsapp_conversations": 45
+}
+
+
+
+🚀 Beneficios de Ambas Mejoras:
+
+Multi-tenant:
+
+Escalabilidad comercial: 1 sistema → N clientes
+Ingresos recurrentes: Modelo SaaS
+Eficiencia operativa: Mantenimiento centralizado
+
+API REST:
+Integraciones nativas: Se conecta con sistemas existentes
+Automatización completa: Sin intervención manual
+Valor agregado: Los clientes pueden construir encima de tu plataforma
+
+💡 Ejemplo de Flujo Completo:
+Cliente programa cita en website del concesionario
+Website llama a tu API para programar recordatorio
+Tu sistema envía email 24h antes de la cita
+Cliente responde por WhatsApp con preguntas
+Tu IA responde con información contextual
+Concesionario ve estadísticas en su dashboard

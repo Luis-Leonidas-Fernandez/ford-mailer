@@ -1,0 +1,17 @@
+{{subject}}
+
+Hola {{recipientName}},
+
+Te recordamos tu {{reminderType}} para {{vehicleModel}} en {{dealershipName}}.
+
+Fecha: {{appointmentDate}}
+Hora: {{appointmentTime}} ({{appointmentTz}})
+{{#if dealershipAddress}}Dirección: {{dealershipAddress}}
+{{/if}}{{#if referenceCode}}Código de referencia: {{referenceCode}}
+{{/if}}{{#if notes}}Notas: {{notes}}
+{{/if}}
+
+{{#if ctaUrl}}Confirmá aquí: {{ctaUrl}}{{/if}}
+
+{{dealershipName}} · {{#if dealershipAddress}}{{dealershipAddress}} · {{/if}}{{contactPhone}}
+Este es un correo automático. Por favor, no responda a este mensaje.

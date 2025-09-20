@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8">
+    <meta name="x-apple-disable-message-reformatting">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{{subject}}</title>
+  </head>
+  <body style="margin:0; padding:0; background:#f6f8fb;">
+    <!-- Wrapper -->
+    <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="background:#f6f8fb;">
+      <tr>
+        <td align="center" style="padding:32px 16px;">
+          <!-- Card -->
+          <table role="presentation" width="640" border="0" cellspacing="0" cellpadding="0" style="max-width:640px; width:100%; background:#ffffff; border-radius:16px; overflow:hidden; box-shadow:0 6px 20px rgba(10,37,64,0.08);">
+            <!-- Header -->
+            <tr>
+              <td style="background:#0b2a4a; padding:24px;">
+                <table role="presentation" width="100%">
+                  <tr>
+                    <td align="left">
+                      <div style="color:#ffffff; font-family:Helvetica,Arial,sans-serif; font-size:18px; font-weight:600; letter-spacing:.2px;">
+                        {{brandTitle}}
+                      </div>
+                      <div style="color:#c7d3e1; font-family:Helvetica,Arial,sans-serif; font-size:13px; margin-top:4px;">
+                        {{brandSubtitle}}
+                      </div>
+                    </td>
+                    {{#if brandLogoUrl}}
+                    <td align="right">
+                      <img src="{{brandLogoUrl}}" alt="Logo" width="64" height="64" style="display:block; border:0; border-radius:12px;">
+                    </td>
+                    {{/if}}
+                  </tr>
+                </table>
+              </td>
+            </tr>
+
+            <!-- Body -->
+            <tr>
+              <td style="padding:32px;">
+                <div style="font-family:Helvetica,Arial,sans-serif; color:#0a1f33; font-size:16px; line-height:1.6;">
+                  <p style="margin:0 0 16px 0;">Hola {{recipientName}},</p>
+                  <p style="margin:0 0 16px 0;">
+                    Te recordamos tu {{reminderType}} para <strong>{{vehicleModel}}</strong> en 
+                    <strong>{{dealershipName}}</strong>.
+                  </p>
+
+                  <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin:20px 0; width:100%; background:#f3f6fb; border:1px solid #e6edf6; border-radius:12px;">
+                    <tr>
+                      <td style="padding:16px 20px;">
+                        <table role="presentation" width="100%">
+                          <tr>
+                            <td style="font-family:Helvetica,Arial,sans-serif; font-size:14px; color:#3b4a5a; padding:4px 0;">
+                              <strong>Fecha:</strong> {{appointmentDate}}
+                            </td>
+                          </tr>
+                          <tr>
+                            <td style="font-family:Helvetica,Arial,sans-serif; font-size:14px; color:#3b4a5a; padding:4px 0;">
+                              <strong>Hora:</strong> {{appointmentTime}} ({{appointmentTz}})
+                            </td>
+                          </tr>
+                          {{#if dealershipAddress}}
+                          <tr>
+                            <td style="font-family:Helvetica,Arial,sans-serif; font-size:14px; color:#3b4a5a; padding:4px 0;">
+                              <strong>Dirección:</strong> {{dealershipAddress}}
+                            </td>
+                          </tr>
+                          {{/if}}
+                          {{#if referenceCode}}
+                          <tr>
+                            <td style="font-family:Helvetica,Arial,sans-serif; font-size:14px; color:#3b4a5a; padding:4px 0;">
+                              <strong>Código de referencia:</strong> {{referenceCode}}
+                            </td>
+                          </tr>
+                          {{/if}}
+                        </table>
+                      </td>
+                    </tr>
+                  </table>
+
+                  {{#if notes}}
+                  <p style="margin:0 0 16px 0;">
+                    <strong>Notas:</strong> {{notes}}
+                  </p>
+                  {{/if}}
+
+                  <!-- CTA button (bulletproof) -->
+                  {{#if ctaUrl}}
+                  <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin:24px 0;">
+                    <tr>
+                      <td align="center" style="border-radius:999px; background:#0b2a4a;">
+                        <a href="{{ctaUrl}}"
+                           style="display:inline-block; padding:12px 20px; font-family:Helvetica,Arial,sans-serif; font-size:15px; color:#ffffff; text-decoration:none; font-weight:600; letter-spacing:.2px;">
+                           {{ctaLabel}}
+                        </a>
+                      </td>
+                    </tr>
+                  </table>
+                  {{/if}}
+
+                  <p style="margin:24px 0 0 0; color:#59728d; font-size:13px;">
+                    Si no solicitaste este recordatorio, ignorá este correo.
+                  </p>
+                </div>
+              </td>
+            </tr>
+
+            <!-- Footer -->
+            <tr>
+              <td style="padding:20px 24px; background:#fbfcfe; border-top:1px solid #eef3f8;">
+                <div style="font-family:Helvetica,Arial,sans-serif; color:#6b7e95; font-size:12px; line-height:1.5;">
+                  {{dealershipName}} · {{#if dealershipAddress}}{{dealershipAddress}} · {{/if}}{{contactPhone}}
+                  <br>
+                  Este es un correo automático. Por favor, no responda a este mensaje.
+                </div>
+              </td>
+            </tr>
+          </table>
+          <!-- /Card -->
+        </td>
+      </tr>
+    </table>
+    <!-- /Wrapper -->
+  </body>
+</html>

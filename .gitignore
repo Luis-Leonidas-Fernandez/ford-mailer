@@ -1,0 +1,349 @@
+# Ford Mailer - GitIgnore
+# Archivo para prevenir la subida accidental de información sensible
+
+# =============================================================================
+# ARCHIVOS DE CONFIGURACIÓN SENSIBLES - ¡MUY IMPORTANTE!
+# =============================================================================
+
+# Variables de entorno con claves privadas
+.env
+.env.local
+.env.development
+.env.test
+.env.production
+.env.staging
+
+# Archivos de configuración con credenciales
+config/secrets.json
+config/credentials.json
+config/keys.json
+
+# Archivos específicos relacionados con las variables de tu .env
+resend-config.json
+whatsapp-credentials.json
+llm-config.json
+rag-settings.json
+mailer-secrets.json
+
+# Credenciales de Google OAuth2
+client_secret.json
+credentials.json
+token.json
+
+# Archivos de API Keys
+api-keys.txt
+secrets.txt
+*.key
+*.pem
+*.p12
+*.pfx
+
+# =============================================================================
+# NODE.JS
+# =============================================================================
+
+# Dependencias
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Coverage directory used by tools like istanbul
+coverage/
+*.lcov
+
+# nyc test coverage
+.nyc_output
+
+# Grunt intermediate storage
+.grunt
+
+# Bower dependency directory
+bower_components
+
+# node-waf configuration
+.lock-wscript
+
+# Compiled binary addons
+build/Release
+
+# Dependency directories
+jspm_packages/
+
+# TypeScript cache
+*.tsbuildinfo
+
+# Optional npm cache directory
+.npm
+
+# Optional eslint cache
+.eslintcache
+
+# Microbundle cache
+.rpt2_cache/
+.rts2_cache_cjs/
+.rts2_cache_es/
+.rts2_cache_umd/
+
+# Optional REPL history
+.node_repl_history
+
+# Output of 'npm pack'
+*.tgz
+
+# Yarn Integrity file
+.yarn-integrity
+
+# parcel-bundler cache
+.cache
+.parcel-cache
+
+# Next.js build output
+.next
+
+# Nuxt.js build / generate output
+.nuxt
+dist
+
+# Gatsby files
+.cache/
+public
+
+# Storybook build outputs
+.out
+.storybook-out
+
+# =============================================================================
+# DATOS SENSIBLES DEL PROYECTO
+# =============================================================================
+
+# Archivos Excel con datos reales de clientes
+data/clientes_reales.xlsx
+data/contactos_produccion.xlsx
+data/base_datos_*.xlsx
+data/*_real.xlsx
+
+# Backups de bases de datos
+*.sql
+*.db
+*.sqlite
+*.sqlite3
+
+# Logs que pueden contener información sensible
+logs/
+*.log
+log/
+
+# Archivos temporales con datos
+temp/
+tmp/
+*.tmp
+*.temp
+
+# Archivos de prueba con datos reales
+test_data_real/
+pruebas_produccion/
+
+# =============================================================================
+# REDIS Y BASES DE DATOS
+# =============================================================================
+
+# Dumps de Redis
+dump.rdb
+appendonly.aof
+redis.conf
+
+# Archivos de base de datos
+*.db-journal
+*.db-wal
+
+# =============================================================================
+# EDITORES E IDEs
+# =============================================================================
+
+# Visual Studio Code
+.vscode/
+!.vscode/extensions.json
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+
+# IntelliJ IDEA
+.idea/
+*.iml
+*.ipr
+*.iws
+
+# Sublime Text
+*.sublime-project
+*.sublime-workspace
+
+# Vim
+*.swp
+*.swo
+*~
+
+# Emacs
+*~
+\#*\#
+/.emacs.desktop
+/.emacs.desktop.lock
+*.elc
+auto-save-list
+tramp
+.\#*
+
+# =============================================================================
+# SISTEMAS OPERATIVOS
+# =============================================================================
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon?
+._*
+.DocumentRevisions-V100
+.fseventsd
+.Spotlight-V100
+.TemporaryItems
+.Trashes
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+.AppleDB
+.AppleDesktop
+Network Trash Folder
+Temporary Items
+.apdisk
+
+# Windows
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+*.stackdump
+[Dd]esktop.ini
+$RECYCLE.BIN/
+*.cab
+*.msi
+*.msix
+*.msm
+*.msp
+*.lnk
+
+# Linux
+*~
+.fuse_hidden*
+.directory
+.Trash-*
+.nfs*
+
+# =============================================================================
+# ARCHIVOS DE DESARROLLO Y TESTING
+# =============================================================================
+
+# Archivos de testing con datos sensibles
+test/fixtures/real_data/
+test/data/production/
+spec/fixtures/sensitive/
+
+# Coverage reports
+coverage/
+.coverage
+htmlcov/
+
+# Benchmark results
+benchmark/
+
+# =============================================================================
+# ARCHIVOS ESPECÍFICOS DEL PROYECTO FORD MAILER
+# =============================================================================
+
+# Archivos de configuración específicos para tu setup
+.env.backup
+.env.*.backup
+env-*.txt
+environment-config.json
+
+# Archivos de configuración de campañas con datos reales
+campaigns/production/
+campaigns/real_clients/
+
+# Templates personalizados con información confidencial
+templates/custom_dealership/
+templates/private/
+
+# Archivos de WhatsApp con conversaciones reales
+whatsapp/conversations/
+whatsapp/logs/real_chats/
+
+# Archivos de estadísticas que pueden contener emails
+stats/detailed/
+analytics/user_data/
+
+# Archivos de backup del sistema
+backups/
+*.backup
+*.bak
+
+# =============================================================================
+# ARCHIVOS TEMPORALES Y CACHE
+# =============================================================================
+
+# Archivos temporales del sistema
+*.tmp
+*.temp
+*.swp
+*.swo
+
+# Cache de aplicaciones
+.cache/
+cache/
+
+# Archivos de lock
+*.lock
+
+# =============================================================================
+# DOCUMENTACIÓN SENSIBLE
+# =============================================================================
+
+# Documentación con credenciales o información confidencial
+docs/private/
+docs/credentials/
+docs/api-keys/
+
+# Manuales de configuración con datos sensibles
+setup/production/
+setup/secrets/
+
+# =============================================================================
+# COMENTARIOS IMPORTANTES
+# =============================================================================
+
+# RECUERDA:
+# - Nunca subas archivos .env con credenciales reales
+# - Crea un .env.example con valores de ejemplo
+# - Usa diferentes archivos .env para diferentes entornos
+# - Revisa siempre antes de hacer commit
+# - Usa 'git status' para verificar qué archivos vas a subir
+
+# PARA EMERGENCIAS:
+# Si ya subiste un archivo con credenciales:
+# 1. Cambia inmediatamente todas las claves comprometidas
+# 2. Usa git filter-branch para eliminar el archivo del historial
+# 3. Fuerza el push: git push --force-with-lease
+
+# ARCHIVOS QUE SÍ DEBES SUBIR:
+# - .env.example (con valores de ejemplo)
+# - README.md
+# - package.json y package-lock.json
+# - Código fuente (.js)
+# - Templates genéricos (.hbs)
+# - Archivos de configuración sin credenciales

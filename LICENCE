@@ -1,0 +1,9 @@
+![License](https://img.shields.io/badge/license-All_rights_reserved-red.svg)
+
+Módulo Node.js para enviar recordatorios a clientes de Ford usando Resend y BullMQ con Redis.
+
+## Características
+- Envío de emails con [Resend](https://resend.com)
+- Programación de recordatorios con BullMQ (colas en Redis)
+- Plantillas HTML/Text
+- Configuración mediante `.env`

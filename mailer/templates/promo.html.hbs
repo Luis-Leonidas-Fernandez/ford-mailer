@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8">
+    <meta name="x-apple-disable-message-reformatting">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{{subject}}</title>
+  </head>
+  <body style="margin:0; padding:0; background:#f6f8fb;">
+    <table role="presentation" width="100%" style="background:#f6f8fb;">
+      <tr>
+        <td align="center" style="padding:32px 16px;">
+          <table role="presentation" width="640" style="max-width:640px; width:100%; background:#ffffff; border-radius:16px; overflow:hidden; box-shadow:0 6px 20px rgba(10,37,64,0.08);">
+            <tr>
+              <td style="background:#0b2a4a; padding:24px;">
+                <table role="presentation" width="100%">
+                  <tr>
+                    <td align="left">
+                      <div style="color:#ffffff; font-family:Helvetica,Arial,sans-serif; font-size:18px; font-weight:600;">
+                        {{brandTitle}}
+                      </div>
+                      <div style="color:#c7d3e1; font-family:Helvetica,Arial,sans-serif; font-size:13px; margin-top:4px;">
+                        {{brandSubtitle}}
+                      </div>
+                    </td>
+                    {{#if brandLogoUrl}}
+                      <td align="right">
+                        <img src="{{brandLogoUrl}}" width="64" height="64" style="display:block; border:0; border-radius:12px;" alt="Logo">
+                      </td>
+                    {{/if}}
+                  </tr>
+                </table>
+              </td>
+            </tr>
+
+            <tr>
+              <td style="padding:32px;">
+                <div style="font-family:Helvetica,Arial,sans-serif; color:#0a1f33; font-size:16px; line-height:1.6;">
+                  <p style="margin:0 0 16px 0;">Hola {{recipientName}},</p>
+                  <p style="margin:0 0 16px 0;">
+                    Te compartimos nuestras <strong>promociones Ford</strong> destacadas:
+                  </p>
+
+                  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border-spacing:12px;">
+                    {{#each promos}}
+                      <tr>
+                        <td style="padding:12px;border:1px solid #eee;border-radius:12px;background:#f9fbff;">
+                          <h3 style="margin:0 0 6px 0;font-family:Arial;">{{this.titulo}}</h3>
+                          <p style="margin:0 0 6px 0;color:#44556a;font-family:Arial;">{{this.descripcion}}</p>
+                          <p style="margin:0 0 10px 0;font-weight:bold;font-family:Arial;">{{this.precio}}</p>
+                          {{#if this.url}}
+                            <a href="{{this.url}}" target="_blank" style="font-family:Arial;">Ver detalles</a>
+                          {{/if}}
+                        </td>
+                      </tr>
+                    {{/each}}
+                  </table>
+
+                  {{#if waLink}}
+                  <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin:24px 0;">
+                    <tr>
+                      <td align="center" style="border-radius:999px; background:#25D366;">
+                        <a href="{{waLink}}"
+                           style="display:inline-block; padding:12px 20px; font-family:Helvetica,Arial,sans-serif; font-size:15px; color:#ffffff; text-decoration:none; font-weight:700; letter-spacing:.2px;">
+                           {{ctaLabel}}
+                        </a>
+                      </td>
+                    </tr>
+                  </table>
+                  {{/if}}
+
+                  <p style="margin:24px 0 0 0; color:#59728d; font-size:13px;">
+                    ¿Preferís que no te escribamos más? <a href="{{unsubscribeUrl}}">Desuscribite aquí</a>.
+                  </p>
+                </div>
+              </td>
+            </tr>
+
+            <tr>
+              <td style="padding:20px 24px; background:#fbfcfe; border-top:1px solid #eef3f8;">
+                <div style="font-family:Helvetica,Arial,sans-serif; color:#6b7e95; font-size:12px; line-height:1.5;">
+                  {{dealershipName}} · {{#if dealershipAddress}}{{dealershipAddress}} · {{/if}}{{contactPhone}}
+                  <br>Este es un correo automático. Por favor, no responda a este mensaje.
+                </div>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>
