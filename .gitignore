@@ -16,6 +16,7 @@
 # IMPORTANTE: .env.example SÍ se debe subir a Git (contiene valores de ejemplo)
 !.env.example
 
+
 # Archivos de configuración con credenciales
 config/secrets.json
 config/credentials.json
@@ -295,6 +296,9 @@ analytics/user_data/
 backups/
 *.backup
 *.bak
+
+# Archivos de actualizaciones y documentación temporal
+updates.text
 
 # =============================================================================
 # ARCHIVOS TEMPORALES Y CACHE
