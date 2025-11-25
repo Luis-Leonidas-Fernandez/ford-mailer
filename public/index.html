@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Inri Servicios Digitales · WhatsApp API</title>
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box;}
+
+    :root{
+      --bg1:#050816;
+      --bg2:#020617;
+      --accent:#38bdf8;
+      --wa-green:#25D366;
+      --text-main:#e5e7eb;
+      --text-muted:#9ca3af;
+    }
+
+    body{
+      font-family:system-ui,-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",sans-serif;
+      min-height:100vh;
+      background:radial-gradient(circle at top,#0b1220 0,#020617 55%,#000 100%);
+      color:var(--text-main);
+      overflow:hidden;
+      animation:bgMove 18s ease-in-out infinite alternate;
+    }
+
+    @keyframes bgMove{
+      0%{background-position:0% 0%;}
+      100%{background-position:60% 40%;}
+    }
+
+    /* ÍCONOS DE WHATSAPP FLOTANTES */
+    #wa-icons{
+      position:fixed;
+      inset:0;
+      z-index:1;           /* por encima de partículas/three, por debajo del contenido */
+      pointer-events:none;
+      overflow:hidden;
+    }
+
+    .wa-icon{
+      position:absolute;
+      width:40px;
+      height:40px;
+      opacity:0.2;
+      animation:waFloat linear infinite;
+      filter:drop-shadow(0 0 8px rgba(37,211,102,.45));
+    }
+
+    @keyframes waFloat{
+      0%{transform:translateY(0) rotate(0deg);opacity:.12;}
+      50%{opacity:.28;}
+      100%{transform:translateY(-140vh) rotate(360deg);opacity:.12;}
+    }
+
+    /* Canvas 3D y partículas */
+    #three,
+    #particles{
+      position:fixed;
+      inset:0;
+      z-index:0;
+      pointer-events:none;
+    }
+
+    .bottom-glow{
+      position:fixed;
+      inset-inline:0;
+      bottom:-120px;
+      height:260px;
+      background:radial-gradient(circle at center,#22d3ee33 0,transparent 60%);
+      filter:blur(18px);
+      opacity:1;
+      pointer-events:none;
+      z-index:0;
+    }
+
+    .page-wrapper{
+      position:relative;
+      z-index:3;
+      min-height:100vh;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:24px;
+    }
+
+    .card{
+      position:relative;
+      max-width:520px;
+      width:100%;
+      padding:28px 26px;
+      border-radius:20px;
+      background:rgba(15,23,42,.78);
+      border:1px solid rgba(148,163,184,.25);
+      box-shadow:0 25px 45px rgba(0,0,0,.7);
+      animation:cardFloat 9s ease-in-out infinite alternate,
+                 fadeIn .7s cubic-bezier(.22,.61,.36,1) both;
+      backdrop-filter:blur(14px);
+    }
+
+    @keyframes fadeIn{
+      0%{opacity:0;transform:translateY(20px);}
+      100%{opacity:1;transform:translateY(0);}
+    }
+
+    @keyframes cardFloat{
+      0%{transform:translateY(0);}
+      100%{transform:translateY(-6px);}
+    }
+
+    .badge{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:5px 10px;
+      border-radius:999px;
+      background:rgba(15,23,42,.9);
+      border:1px solid rgba(148,163,184,.4);
+      color:var(--text-muted);
+      margin-bottom:18px;
+    }
+
+    .badge-dot{
+      width:8px;height:8px;border-radius:50%;
+      background:#22c55e;
+      box-shadow:0 0 12px #22c55ecc;
+      animation:ping 1.4s infinite;
+    }
+
+    @keyframes ping{
+      0%{transform:scale(1);opacity:1;}
+      70%{transform:scale(1.7);opacity:0;}
+      100%{opacity:0;}
+    }
+
+    .badge-pill{
+      padding:2px 8px;
+      border-radius:999px;
+      background:rgba(56,189,248,.08);
+      border:1px solid rgba(56,189,248,.35);
+      font-size:10px;
+      color:#7dd3fc;
+    }
+
+    h1{
+      font-size:1.6rem;
+      display:flex;
+      align-items:center;
+      gap:10px;
+      margin-bottom:4px;
+    }
+
+    .logo-dot{
+      width:20px;height:20px;border-radius:50%;
+      background:radial-gradient(circle,#ecfeff,#25D366,#16a34a);
+      box-shadow:0 0 18px #22c55e99;
+      animation:pulse 3s ease-in-out infinite;
+    }
+
+    @keyframes pulse{
+      0%,100%{transform:scale(1);}
+      50%{transform:scale(1.08);}
+    }
+
+    .subtitle{
+      font-size:.9rem;
+      color:var(--text-muted);
+      margin-bottom:18px;
+    }
+
+    .status-row{
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px;
+      margin-bottom:18px;
+    }
+
+    .status-pill{
+      flex:1 1 160px;
+      padding:10px 12px;
+      border-radius:14px;
+      background:#0f172a;
+      border:1px solid rgba(51,65,85,.9);
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      font-size:.8rem;
+    }
+
+    .status-dot-live{
+      width:9px;height:9px;border-radius:50%;
+      background:#22c55e;
+      box-shadow:0 0 8px #22c55e99;
+      animation:ping 1.5s infinite;
+      display:inline-block;
+    }
+
+    .status-dot-offline{
+      width:9px;height:9px;border-radius:50%;
+      background:#ef4444;
+      box-shadow:0 0 8px #ef444488;
+      display:inline-block;
+    }
+
+    .meta-row{
+      margin-top:-4px;
+      display:flex;
+      flex-wrap:wrap;
+      justify-content:space-between;
+      color:var(--text-muted);
+      font-size:.75rem;
+      margin-bottom:16px;
+      gap:6px 10px;
+    }
+
+    code{
+      background:rgba(15,23,42,.95);
+      padding:3px 6px;
+      border-radius:6px;
+      border:1px solid rgba(148,163,184,.25);
+      font-size:.75rem;
+      font-family:SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace;
+    }
+
+    .button-row{
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px;
+    }
+
+    .btn-primary{
+      flex:1;
+      padding:12px;
+      border-radius:999px;
+      background:linear-gradient(135deg,#c1f7d8,#22c55e,#15803d);
+      color:#020617;
+      font-weight:600;
+      text-align:center;
+      box-shadow:0 18px 35px rgba(34,197,94,.4);
+      text-decoration:none;
+      transition:transform .1s,filter .1s;
+    }
+
+    .btn-primary:hover{
+      transform:translateY(-2px) scale(1.02);
+      filter:brightness(1.08);
+    }
+
+    .btn-secondary{
+      flex:1;
+      padding:12px;
+      border-radius:999px;
+      background:#0f172a;
+      border:1px solid rgba(148,163,184,.6);
+      color:#e5e7eb;
+      transition:.1s;
+      cursor:pointer;
+    }
+
+    .btn-secondary:hover{
+      transform:translateY(-2px);
+      border-color:#e5e7eb;
+    }
+
+    .shortcuts{
+      margin-top:16px;
+      font-size:.74rem;
+      color:var(--text-muted);
+      display:flex;
+      gap:12px;
+      flex-wrap:wrap;
+      align-items:center;
+    }
+
+    .kbd{
+      padding:3px 6px;
+      border-radius:6px;
+      background:#0f172a;
+      border:1px solid rgba(148,163,184,.4);
+      font-size:.75rem;
+      font-family:monospace;
+    }
+
+    .footer-row{
+      margin-top:16px;
+      padding-top:10px;
+      border-top:1px solid rgba(31,41,55,.8);
+      font-size:.7rem;
+      color:var(--text-muted);
+      display:flex;
+      justify-content:space-between;
+      flex-wrap:wrap;
+      gap:8px;
+    }
+
+    .footer-row a{
+      color:#7dd3fc;
+      text-decoration:none;
+    }
+
+    .footer-row a:hover{
+      text-decoration:underline;
+    }
+
+    @media(max-width:480px){
+      .status-row{flex-direction:column;}
+      .button-row{flex-direction:column;}
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ICONOS DE WHATSAPP FLOTANTES -->
+  <div id="wa-icons">
+    <!-- mismo path, distintas posiciones/duraciones -->
+    <!-- Logo WhatsApp vector -->
+    <!-- path COMPLETO, sin "..." -->
+    <!-- 1 -->
+    <svg class="wa-icon" style="left:5%;bottom:-60px;animation-duration:22s;"
+         viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" fill="#25D366">
+      <path d="M16 3C9.383 3 4 8.383 4 15c0 2.113.555 4.086 1.523 5.812L4 29l8.383-1.492A11.87 11.87 0 0 0 16 27c6.617 0 12-5.383 12-12S22.617 3 16 3zm0 2c5.514 0 10 4.486 10 10s-4.486 10-10 10a9.87 9.87 0 0 1-4.734-1.234l-.336-.188-4.969.883.914-4.84-.219-.352A9.83 9.83 0 0 1 6 15c0-5.514 4.486-10 10-10zm-2.047 4c-.258 0-.68.094-1.031.469-.352.375-1.359 1.328-1.359 3.242 0 1.914 1.391 3.766 1.586 4.023.195.258 2.66 4.227 6.571 5.742 3.242 1.219 3.906.977 4.609.914.703-.062 2.266-.922 2.586-1.812.32-.89.32-1.652.227-1.812-.094-.16-.352-.258-.734-.453-.383-.195-2.266-1.117-2.617-1.242-.352-.125-.609-.195-.867.195-.258.391-1 1.242-1.227 1.496-.227.258-.445.289-.828.094-.383-.195-1.617-.594-3.082-1.898-1.14-1.017-1.91-2.273-2.133-2.664-.223-.39-.023-.602.168-.797.172-.172.383-.445.574-.668.191-.223.254-.375.383-.633.129-.258.066-.484-.035-.68-.102-.195-.9-2.156-1.27-2.953-.336-.742-.68-.766-.938-.777z"/>
+    </svg>
+
+    <!-- 2 -->
+    <svg class="wa-icon" style="left:20%;bottom:-80px;animation-duration:26s;transform:scale(0.9);"
+         viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" fill="#25D366">
+      <path d="M16 3C9.383 3 4 8.383 4 15c0 2.113.555 4.086 1.523 5.812L4 29l8.383-1.492A11.87 11.87 0 0 0 16 27c6.617 0 12-5.383 12-12S22.617 3 16 3zm0 2c5.514 0 10 4.486 10 10s-4.486 10-10 10a9.87 9.87 0 0 1-4.734-1.234l-.336-.188-4.969.883.914-4.84-.219-.352A9.83 9.83 0 0 1 6 15c0-5.514 4.486-10 10-10zm-2.047 4c-.258 0-.68.094-1.031.469-.352.375-1.359 1.328-1.359 3.242 0 1.914 1.391 3.766 1.586 4.023.195.258 2.66 4.227 6.571 5.742 3.242 1.219 3.906.977 4.609.914.703-.062 2.266-.922 2.586-1.812.32-.89.32-1.652.227-1.812-.094-.16-.352-.258-.734-.453-.383-.195-2.266-1.117-2.617-1.242-.352-.125-.609-.195-.867.195-.258.391-1 1.242-1.227 1.496-.227.258-.445.289-.828.094-.383-.195-1.617-.594-3.082-1.898-1.14-1.017-1.91-2.273-2.133-2.664-.223-.39-.023-.602.168-.797.172-.172.383-.445.574-.668.191-.223.254-.375.383-.633.129-.258.066-.484-.035-.68-.102-.195-.9-2.156-1.27-2.953-.336-.742-.68-.766-.938-.777z"/>
+    </svg>
+
+    <!-- 3 -->
+    <svg class="wa-icon" style="left:38%;bottom:-70px;animation-duration:20s;transform:scale(1.1);"
+         viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" fill="#25D366">
+      <path d="M16 3C9.383 3 4 8.383 4 15c0 2.113.555 4.086 1.523 5.812L4 29l8.383-1.492A11.87 11.87 0 0 0 16 27c6.617 0 12-5.383 12-12S22.617 3 16 3zm0 2c5.514 0 10 4.486 10 10s-4.486 10-10 10a9.87 9.87 0 0 1-4.734-1.234l-.336-.188-4.969.883.914-4.84-.219-.352A9.83 9.83 0 0 1 6 15c0-5.514 4.486-10 10-10zm-2.047 4c-.258 0-.68.094-1.031.469-.352.375-1.359 1.328-1.359 3.242 0 1.914 1.391 3.766 1.586 4.023.195.258 2.66 4.227 6.571 5.742 3.242 1.219 3.906.977 4.609.914.703-.062 2.266-.922 2.586-1.812.32-.89.32-1.652.227-1.812-.094-.16-.352-.258-.734-.453-.383-.195-2.266-1.117-2.617-1.242-.352-.125-.609-.195-.867.195-.258.391-1 1.242-1.227 1.496-.227.258-.445.289-.828.094-.383-.195-1.617-.594-3.082-1.898-1.14-1.017-1.91-2.273-2.133-2.664-.223-.39-.023-.602.168-.797.172-.172.383-.445.574-.668.191-.223.254-.375.383-.633.129-.258.066-.484-.035-.68-.102-.195-.9-2.156-1.27-2.953-.336-.742-.68-.766-.938-.777z"/>
+    </svg>
+
+    <!-- 4 -->
+    <svg class="wa-icon" style="left:60%;bottom:-90px;animation-duration:24s;"
+         viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" fill="#25D366">
+      <path d="M16 3C9.383 3 4 8.383 4 15c0 2.113.555 4.086 1.523 5.812L4 29l8.383-1.492A11.87 11.87 0 0 0 16 27c6.617 0 12-5.383 12-12S22.617 3 16 3zm0 2c5.514 0 10 4.486 10 10s-4.486 10-10 10a9.87 9.87 0 0 1-4.734-1.234l-.336-.188-4.969.883.914-4.84-.219-.352A9.83 9.83 0 0 1 6 15c0-5.514 4.486-10 10-10zm-2.047 4c-.258 0-.68.094-1.031.469-.352.375-1.359 1.328-1.359 3.242 0 1.914 1.391 3.766 1.586 4.023.195.258 2.66 4.227 6.571 5.742 3.242 1.219 3.906.977 4.609.914.703-.062 2.266-.922 2.586-1.812.32-.89.32-1.652.227-1.812-.094-.16-.352-.258-.734-.453-.383-.195-2.266-1.117-2.617-1.242-.352-.125-.609-.195-.867.195-.258.391-1 1.242-1.227 1.496-.227.258-.445.289-.828.094-.383-.195-1.617-.594-3.082-1.898-1.14-1.017-1.91-2.273-2.133-2.664-.223-.39-.023-.602.168-.797.172-.172.383-.445.574-.668.191-.223.254-.375.383-.633.129-.258.066-.484-.035-.68-.102-.195-.9-2.156-1.27-2.953-.336-.742-.68-.766-.938-.777z"/>
+    </svg>
+
+    <!-- 5 -->
+    <svg class="wa-icon" style="left:80%;bottom:-70px;animation-duration:19s;transform:scale(0.85);"
+         viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" fill="#25D366">
+      <path d="M16 3C9.383 3 4 8.383 4 15c0 2.113.555 4.086 1.523 5.812L4 29l8.383-1.492A11.87 11.87 0 0 0 16 27c6.617 0 12-5.383 12-12S22.617 3 16 3zm0 2c5.514 0 10 4.486 10 10s-4.486 10-10 10a9.87 9.87 0 0 1-4.734-1.234l-.336-.188-4.969.883.914-4.84-.219-.352A9.83 9.83 0 0 1 6 15c0-5.514 4.486-10 10-10zm-2.047 4c-.258 0-.68.094-1.031.469-.352.375-1.359 1.328-1.359 3.242 0 1.914 1.391 3.766 1.586 4.023.195.258 2.66 4.227 6.571 5.742 3.242 1.219 3.906.977 4.609.914.703-.062 2.266-.922 2.586-1.812.32-.89.32-1.652.227-1.812-.094-.16-.352-.258-.734-.453-.383-.195-2.266-1.117-2.617-1.242-.352-.125-.609-.195-.867.195-.258.391-1 1.242-1.227 1.496-.227.258-.445.289-.828.094-.383-.195-1.617-.594-3.082-1.898-1.14-1.017-1.91-2.273-2.133-2.664-.223-.39-.023-.602.168-.797.172-.172.383-.445.574-.668.191-.223.254-.375.383-.633.129-.258.066-.484-.035-.68-.102-.195-.9-2.156-1.27-2.953-.336-.742-.68-.766-.938-.777z"/>
+    </svg>
+  </div>
+
+  <!-- CANVAS 3D Y PARTÍCULAS -->
+  <canvas id="three"></canvas>
+  <canvas id="particles"></canvas>
+  <div class="bottom-glow"></div>
+
+  <div class="page-wrapper">
+    <div class="card">
+      <div class="badge">
+        <span class="badge-dot"></span>
+        Servidor Activo
+        <span class="badge-pill">Business API</span>
+      </div>
+
+      <h1>
+        <span class="logo-dot"></span>
+        Inri Servicios Digitales API
+      </h1>
+
+      <p class="subtitle">
+        Gestión segura de mensajes, plantillas y webhooks de WhatsApp Business.
+      </p>
+
+      <div class="status-row">
+        <div class="status-pill">
+          <span>Estado del servidor</span>
+          <span id="status-text">
+            <span id="status-dot" class="status-dot-live"></span> Online
+          </span>
+        </div>
+        <div class="status-pill">
+          <span>Node.js</span>
+          <span id="node-version-text">-</span>
+        </div>
+      </div>
+
+      <div class="status-row">
+        <div class="status-pill">
+          <span>Uptime</span>
+          <span id="uptime-text">-</span>
+        </div>
+        <div class="status-pill">
+          <span>Puerto</span>
+          <span id="port-text">-</span>
+        </div>
+      </div>
+
+      <div class="meta-row">
+        <span>status: <code>/api/status</code></span>
+        <span>health: <code>/api/health</code></span>
+        <span>webhook: <code>/whatsapp/webhook</code></span>
+      </div>
+
+      <div class="button-row">
+        <a href="/api/status" target="_blank" class="btn-primary">Ver /api/status</a>
+        <button onclick="copyCurl()" class="btn-secondary">Copiar curl</button>
+      </div>
+
+      <div class="shortcuts">
+        <span>Última actualización:</span>
+        <span id="last-update" class="kbd">-</span>
+      </div>
+
+      <div class="footer-row">
+        <span>INRI Servicios Digitales · WhatsApp API</span>
+        <span><a href="mailto:contacto@inriservice.com">contacto@inriservice.com</a></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- STATUS FETCH -->
+  <script>
+    function copyCurl(){
+      const text = "curl " + window.location.origin + "/api/status";
+      navigator.clipboard.writeText(text);
+      alert("Copiado:\n" + text);
+    }
+
+    function updateStatus(){
+      fetch("/api/status")
+        .then(r=>{
+          if(!r.ok) {
+            throw new Error(`HTTP ${r.status}: ${r.statusText}`);
+          }
+          return r.json();
+        })
+        .then(data=>{
+          console.log('Estado del servidor recibido:', data);
+          
+          if(data && data.status === 'active'){
+            // Actualizar estado a Online
+            const statusText = document.getElementById("status-text");
+            if(statusText) {
+              statusText.innerHTML = '<span id="status-dot" class="status-dot-live"></span> Online';
+            }
+            
+            // Actualizar información del servidor
+            const nodeVersionEl = document.getElementById("node-version-text");
+            const uptimeEl = document.getElementById("uptime-text");
+            const portEl = document.getElementById("port-text");
+            const lastUpdateEl = document.getElementById("last-update");
+            
+            if(nodeVersionEl && data.server) nodeVersionEl.textContent = data.server.nodeVersion || '-';
+            if(uptimeEl && data.server) uptimeEl.textContent = data.server.uptimeFormatted || '-';
+            if(portEl && data.server) portEl.textContent = data.server.port || '-';
+            if(lastUpdateEl) lastUpdateEl.textContent = new Date().toLocaleTimeString('es-ES');
+            
+            // Actualizar badge
+            const badgeText = document.querySelector('.badge span:not(.badge-dot):not(.badge-pill)');
+            if(badgeText) badgeText.textContent = 'Servidor Activo';
+            const badgeDot = document.querySelector('.badge-dot');
+            if(badgeDot) badgeDot.style.display = 'block';
+          } else {
+            throw new Error('Estado del servidor no es "active"');
+          }
+        })
+        .catch(err=>{
+          console.error('Error al obtener estado del servidor:', err);
+          
+          // Actualizar estado a Offline solo si realmente hay un error
+          const statusText = document.getElementById("status-text");
+          if(statusText) {
+            statusText.innerHTML = '<span id="status-dot" class="status-dot-offline"></span> Offline';
+          }
+          
+          // Actualizar badge
+          const badgeText = document.querySelector('.badge span:not(.badge-dot):not(.badge-pill)');
+          if(badgeText) badgeText.textContent = 'Servidor Inactivo';
+          const badgeDot = document.querySelector('.badge-dot');
+          if(badgeDot) badgeDot.style.display = 'none';
+        });
+    }
+
+    updateStatus();
+    setInterval(updateStatus,5000);
+  </script>
+
+  <!-- THREE.JS -->
+  <script type="module">
+    import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.162.0/build/three.module.js";
+
+    const renderer=new THREE.WebGLRenderer({
+      canvas:document.getElementById("three"),
+      alpha:true
+    });
+    renderer.setSize(window.innerWidth,window.innerHeight);
+
+    const scene=new THREE.Scene();
+    const camera=new THREE.PerspectiveCamera(50,window.innerWidth/window.innerHeight,0.1,100);
+    camera.position.set(0,0,3);
+
+    const geom=new THREE.IcosahedronGeometry(1.2,2);
+    const mat=new THREE.MeshPhongMaterial({
+      color:0x22c55e,
+      emissive:0x0f172a,
+      shininess:70,
+      transparent:true,
+      opacity:0.9
+    });
+    const mesh=new THREE.Mesh(geom,mat);
+
+    const wire=new THREE.MeshBasicMaterial({
+      color:0x38bdf8,
+      wireframe:true,
+      opacity:.4,
+      transparent:true
+    });
+    const meshWire=new THREE.Mesh(geom,wire);
+
+    scene.add(mesh);
+    scene.add(meshWire);
+
+    const light1=new THREE.PointLight(0x22c55e,1.3);
+    light1.position.set(4,4,4);
+    scene.add(light1);
+
+    const light2=new THREE.PointLight(0x38bdf8,1.2);
+    light2.position.set(-4,-2,-3);
+    scene.add(light2);
+
+    scene.add(new THREE.AmbientLight(0x0b1120,0.7));
+
+    function anim(){
+      requestAnimationFrame(anim);
+      mesh.rotation.x+=.002;
+      mesh.rotation.y+=.003;
+      meshWire.rotation.x-=.001;
+      meshWire.rotation.y+=.002;
+      renderer.render(scene,camera);
+    }
+    anim();
+
+    window.addEventListener("resize",()=>{
+      renderer.setSize(window.innerWidth,window.innerHeight);
+      camera.aspect=window.innerWidth/window.innerHeight;
+      camera.updateProjectionMatrix();
+    });
+  </script>
+
+  <!-- PARTÍCULAS -->
+  <script>
+    const pc=document.getElementById("particles");
+    const px=pc.getContext("2d");
+    let W,H,pts;
+
+    function resize(){
+      W=pc.width=innerWidth;
+      H=pc.height=innerHeight;
+      pts=Array.from({length:(W+H)/24},()=>({
+        x:Math.random()*W,
+        y:Math.random()*H,
+        vx:(Math.random()-.5)*.4,
+        vy:(Math.random()-.5)*.4,
+        r:Math.random()*2.2+.6
+      }));
+    }
+
+    resize();
+    addEventListener("resize",resize);
+
+    function draw(){
+      px.clearRect(0,0,W,H);
+      px.fillStyle="#020617";
+      px.fillRect(0,0,W,H);
+
+      for(let p of pts){
+        px.beginPath();
+        const g=px.createRadialGradient(p.x,p.y,0,p.x,p.y,p.r*3);
+        g.addColorStop(0,"rgba(125,211,252,.4)");
+        g.addColorStop(1,"rgba(15,23,42,0)");
+        px.fillStyle=g;
+        px.arc(p.x,p.y,p.r*3,0,Math.PI*2);
+        px.fill();
+
+        p.x+=p.vx; p.y+=p.vy;
+        if(p.x< -50) p.x=W+50;
+        if(p.x>W+50) p.x=-50;
+        if(p.y< -50) p.y=H+50;
+        if(p.y>H+50) p.y=-50;
+      }
+
+      requestAnimationFrame(draw);
+    }
+    draw();
+  </script>
+</body>
+</html>
