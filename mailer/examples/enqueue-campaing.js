@@ -39,7 +39,7 @@ const PROMOS = [
 ];
 
 // Información del vendedor para contacto por WhatsApp
-const VENDEDOR = { nombre: 'Mariano', phoneE164: '+5493515551234' };
+const VENDEDOR = { nombre: 'Cristian', phoneE164: '+5493624169463' };
 
 // Configuración de la campaña promocional
 const CAMPAIGN = {

@@ -26,7 +26,7 @@ export const config = {
   from:
     process.env.RESEND_FROM ||
     process.env.GMAIL_FROM ||
-    'Recordatorios Ford <no-reply@inricompany.com>',
+    'Cristian Sosa <no-reply@inricompany.com>',
 
   // Email de prueba para testing - ⚠️ Importante configurar en producción
   testTo: process.env.TEST_TO || 'test@example.com',

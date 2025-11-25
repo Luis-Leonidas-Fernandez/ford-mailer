@@ -22,8 +22,8 @@ import { buildWhatsAppLink } from '../utils/whatsapp.js';
 
 // Información del vendedor para contacto por WhatsApp
 const VENDEDOR = {
-  nombre: 'Mariano',
-  phoneE164: '+5493515551234',
+  nombre: 'Cristian',
+  phoneE164: '+5493624169463',
 };
 
 // Base de contactos (en producción cargar desde CSV/DB)

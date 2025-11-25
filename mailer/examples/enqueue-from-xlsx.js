@@ -23,33 +23,29 @@ const XLSX_PATH = process.env.MAILER_XLSX_PATH || path.resolve(process.cwd(), 'd
 // Promociones de vehículos Ford para incluir en el email
 const PROMOS = [
   { 
-    titulo: 'Ford Ranger XLT', 
-    descripcion: 'Financiación especial', 
-    precio: 'USD 32.500', 
-    url: 'https://inri.com/ranger?utm_source=email&utm_medium=promo&utm_campaign=ford' 
-  },
+    imageUrl: 'https://res.cloudinary.com/dzrr7sbol/image/upload/v1763472209/ford-ranger-xlt_nyyc5m.webp', 
+     
+     },
   { 
-    titulo: 'Ford Mustang', 
-    descripcion: 'Entrega pactada', 
-    precio: 'USD 52.000', 
-    url: 'https://inri.com/mustang?utm_source=email&utm_medium=promo&utm_campaign=ford' 
-  },
+    imageUrl: 'https://res.cloudinary.com/dzrr7sbol/image/upload/v1763472439/ford-ranger-xls_lfnnfz.webp', 
+    
+    },
   // Agregar más promociones según necesidad...
 ];
 
 // Información del vendedor para contacto por WhatsApp
-const VENDEDOR = { nombre: 'Mariano', phoneE164: '+5493515551234' };
+const VENDEDOR = { nombre: 'Cristian', phoneE164: '+5493624169463' };
 
 // Configuración de la campaña promocional
 const CAMPAIGN = {
-  subject: 'Promos Ford de la semana',
-  brandTitle: 'Ford Service',
-  brandSubtitle: 'Centro Oficial',
+  subject: 'Promos Ford del mes',
+  brandTitle: 'Ford Promos del Mes',
+  brandSubtitle: 'Centro de Ventas',
   brandLogoUrl: 'https://dummyimage.com/128x128/0b2a4a/ffffff&text=F',
-  dealershipName: 'INRI Company Motors',
-  dealershipAddress: 'Av. Siempreviva 742, Córdoba',
-  contactPhone: '+54 351 555-1234',
-  ctaLabel: 'Escribir por WhatsApp',
+  dealershipName: 'Asesor Certificado',
+  dealershipAddress: 'Av. 9 de Julio y Av. Italia',
+  contactPhone: '+54 362 416-9463',
+  ctaLabel: 'Escribime',
 };
 
 // Ejecuta la campaña cargando contactos desde el archivo Excel

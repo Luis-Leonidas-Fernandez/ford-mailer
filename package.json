@@ -8,16 +8,21 @@
     "node": ">=18.17"
   },
   "scripts": {
-    "enqueue:campaign": "node mailer/examples/enqueue-campaign.js",    
+    "enqueue:campaign": "node mailer/examples/enqueue-campaign.js",
     "enqueue:from-xlsx": "node mailer/examples/enqueue-from-xlsx.js",
     "whatsapp:webhook": "node whatsapp/src/webhook.js",
     "start": "node send-test.js",
+    "server": "node server.js",
     "dev:worker": "node mailer/worker.js",
     "enqueue:now": "node mailer/examples/enqueue-now.js",
     "enqueue:later": "node mailer/examples/enqueue-later.js",
     "send:fancy": "node mailer/examples/send-fancy.js",
     "send:test": "node send-test.js",
-    "lint": "eslint . --ext .js"
+    "lint": "eslint . --ext .js",
+    "campaign:run": "npm-run-all --parallel dev:worker enqueue:from-xlsx",
+    "fix:clientes": "node scripts/fix-clientes.mjs",
+    "campaign:complete": "npm-run-all fix:clientes --parallel dev:worker enqueue:from-xlsx",
+    "check:deps": "npm outdated"
   },
   "keywords": [
     "mailer",
@@ -31,15 +36,18 @@
   "dependencies": {
     "axios": "^1.11.0",
     "bullmq": "^5.58.5",
+    "cors": "^2.8.5",
     "dotenv": "^16.4.5",
     "express": "^5.1.0",
     "googleapis": "^159.0.0",
     "handlebars": "^4.7.8",
     "ioredis": "^5.7.0",
+    "morgan": "^1.10.0",
     "resend": "^6.0.2",
     "xlsx": "^0.18.5"
   },
   "devDependencies": {
-    "eslint": "^9.0.0"
+    "eslint": "^9.0.0",
+    "npm-run-all": "^4.1.5"
   }
 }

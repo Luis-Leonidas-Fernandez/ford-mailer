@@ -41,20 +41,24 @@
                     Te compartimos nuestras <strong>promociones Ford</strong> destacadas:
                   </p>
 
-                  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border-spacing:12px;">
-                    {{#each promos}}
-                      <tr>
-                        <td style="padding:12px;border:1px solid #eee;border-radius:12px;background:#f9fbff;">
-                          <h3 style="margin:0 0 6px 0;font-family:Arial;">{{this.titulo}}</h3>
-                          <p style="margin:0 0 6px 0;color:#44556a;font-family:Arial;">{{this.descripcion}}</p>
-                          <p style="margin:0 0 10px 0;font-weight:bold;font-family:Arial;">{{this.precio}}</p>
-                          {{#if this.url}}
-                            <a href="{{this.url}}" target="_blank" style="font-family:Arial;">Ver detalles</a>
-                          {{/if}}
-                        </td>
-                      </tr>
-                    {{/each}}
-                  </table>
+             <table role="presentation" width="100%" style="margin:24px 0;">
+              {{#each promos}} 
+              {{#if this.imageUrl}} 
+             <tr>
+             <td align="center" style="padding:12px 0;">
+             <a href="{{../waLink}}">
+             <img src="{{this.imageUrl}}" alt="Promoción Ford" style="max-width:100%; height:auto; border:0;" width="600">
+              </a>
+              <p style="margin:12px 0 0 0; text-align:center;">
+              <a href="https://wa.me/p/9316926015091153/5493624169463" style="color:#0b2a4a; text-decoration:underline; text-decoration-skip-ink:none; font-family:Helvetica,Arial,sans-serif; font-size:14px; font-weight:600; white-space:nowrap;">
+              Ver&nbsp;Detalle
+              </a>
+             </p>
+           </td>
+          </tr>
+        {{/if}}
+        {{/each}}
+        </table>
 
                   {{#if waLink}}
                   <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin:24px 0;">
