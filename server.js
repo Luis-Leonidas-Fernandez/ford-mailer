@@ -5,6 +5,7 @@
  * - Middleware CORS para permitir peticiones desde cualquier origen
  * - Servicio de archivos estáticos desde la carpeta public
  * - Endpoint de estado del servidor
+ * - Webhooks de WhatsApp Business API (verificación y eventos)
  * - Manejo de errores centralizado
  * - Logging de requests con Morgan
  */
@@ -74,6 +75,29 @@ app.get('/api/health', (req, res) => {
     status: 'healthy',
     timestamp: new Date().toISOString()
   });
+});
+
+// WhatsApp Webhook Verification (OBLIGATORIO)
+app.get('/whatsapp/webhook', (req, res) => {
+  const VERIFY_TOKEN = process.env.WA_VERIFY_TOKEN || 'inri_verify_token';
+
+  const mode = req.query['hub.mode'];
+  const token = req.query['hub.verify_token'];
+  const challenge = req.query['hub.challenge'];
+
+  if (mode && token && mode === 'subscribe' && token === VERIFY_TOKEN) {
+    console.log('[WhatsApp Webhook] Webhook verificado correctamente.');
+    res.status(200).send(challenge);
+  } else {
+    console.log('[WhatsApp Webhook] Verificación fallida.');
+    res.sendStatus(403);
+  }
+});
+
+// WhatsApp Webhook para eventos (mensajes entrantes)
+app.post('/whatsapp/webhook', (req, res) => {
+  console.log('[WhatsApp Webhook] Evento entrante de WhatsApp:', JSON.stringify(req.body, null, 2));
+  res.sendStatus(200);
 });
 
 // Middleware de manejo de errores 404
