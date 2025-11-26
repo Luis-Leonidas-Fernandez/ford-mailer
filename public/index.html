@@ -400,7 +400,7 @@
       </div>
 
       <div class="button-row">
-        <a href="/api/status" target="_blank" class="btn-primary">Ver /api/status</a>
+        <a href="/api-status/api/status" target="_blank" class="btn-primary">Ver /api/status</a>
         <button onclick="copyCurl()" class="btn-secondary">Copiar curl</button>
       </div>
 
@@ -419,13 +419,21 @@
   <!-- STATUS FETCH -->
   <script>
     function copyCurl(){
-      const text = "curl " + window.location.origin + "/api/status";
+      const basePath = window.location.pathname.split('/api-status')[0] || '';
+      const apiPath = basePath + '/api-status/api/status';
+      const text = "curl " + window.location.origin + apiPath;
       navigator.clipboard.writeText(text);
       alert("Copiado:\n" + text);
     }
 
     function updateStatus(){
-      fetch("/api/status")
+      // Construir la ruta correcta considerando el prefijo /api-status de Nginx
+      let apiPath = '/api/status';
+      if(window.location.pathname.includes('/api-status')) {
+        apiPath = '/api-status/api/status';
+      }
+      
+      fetch(apiPath)
         .then(r=>{
           if(!r.ok) {
             throw new Error(`HTTP ${r.status}: ${r.statusText}`);
