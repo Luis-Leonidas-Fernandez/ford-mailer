@@ -85,12 +85,19 @@ app.get('/whatsapp/webhook', (req, res) => {
   const token = req.query['hub.verify_token'];
   const challenge = req.query['hub.challenge'];
 
-  if (mode && token && mode === 'subscribe' && token === VERIFY_TOKEN) {
-    console.log('[WhatsApp Webhook] Webhook verificado correctamente.');
-    res.status(200).send(challenge);
+  // Si es una verificación de Meta (tiene los parámetros de verificación)
+  if (mode && token && challenge) {
+    if (mode === 'subscribe' && token === VERIFY_TOKEN) {
+      console.log('[WhatsApp Webhook] Webhook verificado correctamente.');
+      // Meta espera solo el challenge como texto plano
+      res.status(200).send(challenge);
+    } else {
+      console.log('[WhatsApp Webhook] Verificación fallida.');
+      res.sendStatus(403);
+    }
   } else {
-    console.log('[WhatsApp Webhook] Verificación fallida.');
-    res.sendStatus(403);
+    // Si no es una verificación de Meta, mostrar página HTML elegante
+    res.sendFile(join(__dirname, 'public', 'webhook.html'));
   }
 });
 
