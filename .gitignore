@@ -133,6 +133,10 @@ data/clientes_reales.xlsx
 data/contactos_produccion.xlsx
 data/base_datos_*.xlsx
 data/*_real.xlsx
+# Archivos Excel específicos con datos sensibles
+data/clientes.xlsx
+data/*_clientes.xlsx
+data/clientes_*.xlsx
 
 # Backups de bases de datos
 *.sql
@@ -299,6 +303,11 @@ backups/
 
 # Archivos de actualizaciones y documentación temporal
 updates.text
+# Archivos de documentación que pueden contener información sensible
+crm.text
+*.text
+!README.text
+!LICENSE.text
 
 # =============================================================================
 # ARCHIVOS TEMPORALES Y CACHE
