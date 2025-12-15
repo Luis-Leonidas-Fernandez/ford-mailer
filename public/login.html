@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Login - Ford Mailer</title>
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box;}
+
+    :root{
+      --bg1:#050816;
+      --bg2:#020617;
+      --accent:#38bdf8;
+      --wa-green:#25D366;
+      --text-main:#e5e7eb;
+      --text-muted:#9ca3af;
+      --error:#ef4444;
+      --success:#22c55e;
+    }
+
+    body{
+      font-family:system-ui,-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",sans-serif;
+      min-height:100vh;
+      background:radial-gradient(circle at top,#0b1220 0,#020617 55%,#000 100%);
+      color:var(--text-main);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:24px;
+    }
+
+    .page-wrapper{
+      width:100%;
+      max-width:420px;
+    }
+
+    .card{
+      background:rgba(15,23,42,.78);
+      border:1px solid rgba(148,163,184,.25);
+      border-radius:20px;
+      padding:32px;
+      box-shadow:0 25px 45px rgba(0,0,0,.7);
+      backdrop-filter:blur(14px);
+      animation:fadeIn .7s cubic-bezier(.22,.61,.36,1);
+    }
+
+    @keyframes fadeIn{
+      0%{opacity:0;transform:translateY(20px);}
+      100%{opacity:1;transform:translateY(0);}
+    }
+
+    .logo{
+      text-align:center;
+      margin-bottom:32px;
+    }
+
+    .logo h1{
+      font-size:24px;
+      font-weight:600;
+      color:var(--text-main);
+      margin-bottom:8px;
+    }
+
+    .logo p{
+      font-size:14px;
+      color:var(--text-muted);
+    }
+
+    .form-group{
+      margin-bottom:20px;
+    }
+
+    .form-group label{
+      display:block;
+      margin-bottom:8px;
+      font-size:14px;
+      font-weight:500;
+      color:var(--text-main);
+    }
+
+    .form-group input{
+      width:100%;
+      padding:12px 16px;
+      background:rgba(15,23,42,.9);
+      border:1px solid rgba(148,163,184,.3);
+      border-radius:10px;
+      color:var(--text-main);
+      font-size:15px;
+      transition:all .2s;
+    }
+
+    .form-group input:focus{
+      outline:none;
+      border-color:var(--accent);
+      box-shadow:0 0 0 3px rgba(56,189,248,.1);
+    }
+
+    .form-group input::placeholder{
+      color:var(--text-muted);
+    }
+
+    .btn-primary{
+      width:100%;
+      padding:14px;
+      background:linear-gradient(135deg,#38bdf8,#0ea5e9);
+      color:#fff;
+      border:none;
+      border-radius:10px;
+      font-size:16px;
+      font-weight:600;
+      cursor:pointer;
+      transition:all .2s;
+      margin-top:8px;
+    }
+
+    .btn-primary:hover{
+      transform:translateY(-2px);
+      box-shadow:0 10px 25px rgba(56,189,248,.3);
+    }
+
+    .btn-primary:disabled{
+      opacity:.6;
+      cursor:not-allowed;
+      transform:none;
+    }
+
+    .alert{
+      padding:12px 16px;
+      border-radius:10px;
+      margin-bottom:20px;
+      font-size:14px;
+      display:none;
+    }
+
+    .alert.error{
+      background:rgba(239,68,68,.1);
+      border:1px solid rgba(239,68,68,.3);
+      color:#fca5a5;
+    }
+
+    .alert.success{
+      background:rgba(34,197,94,.1);
+      border:1px solid rgba(34,197,94,.3);
+      color:#86efac;
+    }
+
+    .alert.show{
+      display:block;
+    }
+
+    .links{
+      text-align:center;
+      margin-top:24px;
+      font-size:14px;
+    }
+
+    .links a{
+      color:var(--accent);
+      text-decoration:none;
+      transition:opacity .2s;
+    }
+
+    .links a:hover{
+      opacity:.8;
+    }
+
+    .loading{
+      display:inline-block;
+      width:16px;
+      height:16px;
+      border:2px solid rgba(255,255,255,.3);
+      border-top-color:#fff;
+      border-radius:50%;
+      animation:spin .6s linear infinite;
+      margin-right:8px;
+      vertical-align:middle;
+    }
+
+    @keyframes spin{
+      to{transform:rotate(360deg);}
+    }
+  </style>
+</head>
+<body>
+  <div class="page-wrapper">
+    <div class="card">
+      <div class="logo">
+        <h1>Ford Mailer</h1>
+        <p>Inicia sesión en tu cuenta</p>
+      </div>
+
+      <div id="alert" class="alert"></div>
+
+      <form id="loginForm">
+        <div class="form-group">
+          <label for="email">Email</label>
+          <input 
+            type="email" 
+            id="email" 
+            name="email" 
+            placeholder="tu@email.com" 
+            required 
+            autocomplete="email"
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="password">Contraseña</label>
+          <input 
+            type="password" 
+            id="password" 
+            name="password" 
+            placeholder="••••••••" 
+            required 
+            autocomplete="current-password"
+          />
+        </div>
+
+        <button type="submit" class="btn-primary" id="submitBtn">
+          Iniciar Sesión
+        </button>
+      </form>
+
+      <div class="links">
+        <p>¿No tienes cuenta? <a href="/register.html">Regístrate aquí</a></p>
+        <p style="margin-top:8px;"><a href="/">Volver al inicio</a></p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const form = document.getElementById('loginForm');
+    const alert = document.getElementById('alert');
+    const submitBtn = document.getElementById('submitBtn');
+
+    function showAlert(message, type) {
+      alert.textContent = message;
+      alert.className = `alert ${type} show`;
+      setTimeout(() => {
+        alert.classList.remove('show');
+      }, 5000);
+    }
+
+    function setLoading(loading) {
+      submitBtn.disabled = loading;
+      if (loading) {
+        submitBtn.innerHTML = '<span class="loading"></span>Iniciando sesión...';
+      } else {
+        submitBtn.innerHTML = 'Iniciar Sesión';
+      }
+    }
+
+    // Validación en tiempo real
+    const emailInput = document.getElementById('email');
+    const passwordInput = document.getElementById('password');
+
+    function validateEmail(email) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      return emailRegex.test(email);
+    }
+
+    emailInput.addEventListener('blur', () => {
+      const email = emailInput.value.trim();
+      if (email && !validateEmail(email)) {
+        emailInput.style.borderColor = 'var(--error)';
+      } else {
+        emailInput.style.borderColor = '';
+      }
+    });
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      setLoading(true);
+
+      const email = emailInput.value.trim();
+      const password = passwordInput.value;
+
+      // Validación antes de enviar
+      if (!email) {
+        showAlert('El email es requerido', 'error');
+        setLoading(false);
+        emailInput.focus();
+        return;
+      }
+
+      if (!validateEmail(email)) {
+        showAlert('Por favor ingresa un email válido', 'error');
+        setLoading(false);
+        emailInput.focus();
+        return;
+      }
+
+      if (!password) {
+        showAlert('La contraseña es requerida', 'error');
+        setLoading(false);
+        passwordInput.focus();
+        return;
+      }
+
+      try {
+        const response = await fetch('/api/auth/login', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ email, password }),
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          // Manejar errores de validación del backend
+          if (data.errors && Array.isArray(data.errors)) {
+            const errorMessages = data.errors.map(err => err.message).join(', ');
+            throw new Error(errorMessages);
+          }
+          throw new Error(data.error || 'Error al iniciar sesión');
+        }
+
+        // Guardar token en localStorage
+        localStorage.setItem('token', data.token);
+        localStorage.setItem('user', JSON.stringify(data.user));
+
+        showAlert('¡Login exitoso! Redirigiendo...', 'success');
+
+        // Redirigir después de 1 segundo
+        setTimeout(() => {
+          window.location.href = '/dashboard.html';
+        }, 1000);
+
+      } catch (error) {
+        showAlert(error.message, 'error');
+        setLoading(false);
+      }
+    });
+
+    // Verificar si ya está logueado
+    if (localStorage.getItem('token')) {
+      window.location.href = '/dashboard.html';
+    }
+  </script>
+</body>
+</html>
+

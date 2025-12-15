@@ -12,7 +12,8 @@
     "enqueue:from-xlsx": "node mailer/examples/enqueue-from-xlsx.js",
     "whatsapp:webhook": "node whatsapp/src/webhook.js",
     "start": "node send-test.js",
-    "server": "node server.js",
+    "server": "node src/server.js",
+    "dev": "node --watch src/server.js",
     "dev:worker": "node mailer/worker.js",
     "enqueue:now": "node mailer/examples/enqueue-now.js",
     "enqueue:later": "node mailer/examples/enqueue-later.js",
@@ -22,7 +23,8 @@
     "campaign:run": "npm-run-all --parallel dev:worker enqueue:from-xlsx",
     "fix:clientes": "node scripts/fix-clientes.mjs",
     "campaign:complete": "npm-run-all fix:clientes --parallel dev:worker enqueue:from-xlsx",
-    "check:deps": "npm outdated"
+    "check:deps": "npm outdated",
+    "check:env": "node scripts/check-env.js"
   },
   "keywords": [
     "mailer",
@@ -35,14 +37,18 @@
   "license": "Proprietary",
   "dependencies": {
     "axios": "^1.11.0",
+    "bcryptjs": "^2.4.3",
     "bullmq": "^5.58.5",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
     "express": "^5.1.0",
     "express-rate-limit": "^7.1.5",
+    "express-validator": "^7.0.1",
     "googleapis": "^159.0.0",
     "handlebars": "^4.7.8",
     "ioredis": "^5.7.0",
+    "jsonwebtoken": "^9.0.0",
+    "mongoose": "^8.0.0",
     "morgan": "^1.10.0",
     "resend": "^6.0.2",
     "xlsx": "^0.18.5"

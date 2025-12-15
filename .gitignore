@@ -7,14 +7,17 @@
 
 # Variables de entorno con claves privadas
 .env
+.env.*
+!.env.example
 .env.local
 .env.development
 .env.test
 .env.production
 .env.staging
+.env.backup
+.env.*.backup
 
 # IMPORTANTE: .env.example SÍ se debe subir a Git (contiene valores de ejemplo)
-!.env.example
 
 
 # Archivos de configuración con credenciales
@@ -33,14 +36,29 @@ mailer-secrets.json
 client_secret.json
 credentials.json
 token.json
+oauth2-*.json
+google-credentials.json
+# Tokens de acceso
+*.access_token
+*.refresh_token
+gmail-*.json
 
-# Archivos de API Keys
+# Archivos de API Keys y certificados
 api-keys.txt
 secrets.txt
 *.key
 *.pem
 *.p12
 *.pfx
+*.crt
+*.cer
+*.jks
+*.keystore
+# Archivos con contraseñas
+*password*.txt
+*secret*.txt
+*credentials*.txt
+!README.txt
 
 # =============================================================================
 # NODE.JS
@@ -83,6 +101,9 @@ jspm_packages/
 
 # TypeScript cache
 *.tsbuildinfo
+# TypeScript incremental builds
+*.tsbuildinfo
+tsconfig.tsbuildinfo
 
 # Optional npm cache directory
 .npm
@@ -143,11 +164,26 @@ data/clientes_*.xlsx
 *.db
 *.sqlite
 *.sqlite3
+*.mongo
+*.mongodb
+# Dumps de MongoDB
+*.bson
+mongodump/
 
 # Logs que pueden contener información sensible
 logs/
 *.log
 log/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+pnpm-debug.log*
+# Logs específicos del proyecto
+mailer.log
+worker.log
+api.log
+*.log.*
 
 # Archivos temporales con datos
 temp/
@@ -167,6 +203,8 @@ pruebas_produccion/
 dump.rdb
 appendonly.aof
 redis.conf
+redis-*.conf
+*.rdb
 
 # Archivos de base de datos
 *.db-journal
@@ -182,6 +220,10 @@ redis.conf
 !.vscode/settings.json
 !.vscode/tasks.json
 !.vscode/launch.json
+!.vscode/*.code-workspace
+
+# Cursor IDE (similar a VSCode)
+.cursor/
 
 # IntelliJ IDEA
 .idea/
@@ -275,31 +317,43 @@ benchmark/
 # =============================================================================
 
 # Archivos de configuración específicos para tu setup
-.env.backup
-.env.*.backup
 env-*.txt
 environment-config.json
 
 # Archivos de configuración de campañas con datos reales
 campaigns/production/
 campaigns/real_clients/
+campaigns/*_production/
+campaigns/*_real/
 
 # Templates personalizados con información confidencial
 templates/custom_dealership/
 templates/private/
+templates/*_confidential/
 
 # Archivos de WhatsApp con conversaciones reales
 whatsapp/conversations/
 whatsapp/logs/real_chats/
+whatsapp/*_real/
+whatsapp/*_production/
 
 # Archivos de estadísticas que pueden contener emails
 stats/detailed/
 analytics/user_data/
+stats/*_sensitive/
 
 # Archivos de backup del sistema
 backups/
 *.backup
 *.bak
+
+# Archivos de sesión y autenticación
+sessions/
+*.session
+*.session.json
+# Cookies y tokens almacenados localmente
+cookies.txt
+*.cookie
 
 # Archivos de actualizaciones y documentación temporal
 updates.text
@@ -308,6 +362,12 @@ crm.text
 *.text
 !README.text
 !LICENSE.text
+!CHANGELOG.text
+# Notas y documentación temporal
+notes.txt
+TODO.txt
+*.notes
+*.draft
 
 # =============================================================================
 # ARCHIVOS TEMPORALES Y CACHE
@@ -322,9 +382,24 @@ crm.text
 # Cache de aplicaciones
 .cache/
 cache/
+.npm/
+.yarn/
+.yarn/cache
+.yarn/unplugged
+.yarn/build-state.yml
+.yarn/install-state.gz
+.pnp.*
 
-# Archivos de lock
+# Archivos de Docker
+# .dockerignore SÍ debe subirse (es configuración del proyecto)
+docker-compose.override.yml
+docker-compose.*.yml
+!docker-compose.yml
+
+# Archivos de lock (permitir package-lock.json y yarn.lock que son necesarios)
 *.lock
+!package-lock.json
+!yarn.lock
 
 # =============================================================================
 # DOCUMENTACIÓN SENSIBLE
@@ -359,7 +434,22 @@ setup/secrets/
 # ARCHIVOS QUE SÍ DEBES SUBIR:
 # - .env.example (con valores de ejemplo)
 # - README.md
-# - package.json y package-lock.json
-# - Código fuente (.js)
+# - package.json y package-lock.json (¡IMPORTANTE!)
+# - Código fuente (.js, .mjs)
 # - Templates genéricos (.hbs)
-# - Archivos de configuración sin credenciales
+# - Archivos de configuración sin credenciales (config.js, docker-compose.yml)
+# - Archivos de documentación pública (README.md, LICENSE, etc.)
+
+# VERIFICACIÓN ANTES DE COMMIT:
+# Ejecuta: git status
+# Verifica que NO aparezcan:
+#   - Archivos .env (excepto .env.example)
+#   - data/clientes.xlsx o similares
+#   - Archivos con credenciales (*.key, *.pem, credentials.json, etc.)
+#   - Logs con información sensible
+#   - Archivos de base de datos (*.db, *.sql, dump.rdb)
+#   - Backups y archivos temporales
+
+# COMANDO ÚTIL PARA VERIFICAR:
+# git status --ignored  # Muestra archivos ignorados
+# git check-ignore -v <archivo>  # Verifica por qué un archivo está ignorado

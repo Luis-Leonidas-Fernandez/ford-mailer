@@ -337,10 +337,13 @@ cp .env.example .env
 
 ### 3. Iniciar Redis
 ```bash
-# Con Docker
+# Opción A: Docker (recomendada)
+docker compose up -d redis
+
+# Opción B: Contenedor directo
 docker run -d -p 6379:6379 redis:alpine
 
-# O instalar localmente
+# Opción C: Instalar localmente
 redis-server
 ```
 

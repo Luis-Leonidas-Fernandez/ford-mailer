@@ -1,0 +1,63 @@
+version: "3.9"
+
+services:
+  redis:
+    image: redis:7-alpine
+    container_name: ford-mailer-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    command: ["redis-server", "--appendonly", "yes"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - ford-mailer_default
+
+  worker:
+    image: node:18-alpine
+    container_name: ford-mailer-worker
+    working_dir: /usr/src/app
+    volumes:
+      - .:/usr/src/app
+    command: ["npm", "run", "dev:worker"]
+    env_file:
+      - .env
+    environment:
+      - REDIS_URL=redis://redis:6379
+    depends_on:
+      - redis
+    networks:
+      - ford-mailer_default
+
+  api:
+    image: node:18-alpine
+    container_name: ford-mailer-api
+    working_dir: /usr/src/app
+    volumes:
+      - .:/usr/src/app
+    command: ["npm", "run", "dev"]
+    env_file:
+      - .env
+    environment:
+      - REDIS_URL=redis://redis:6379
+    ports:
+      - "3000:3000"
+    depends_on:
+      - redis
+    networks:
+      - ford-mailer_default
+      - vector-rag-network
+
+networks:
+  ford-mailer_default: {}
+  vector-rag-network:
+    external: true
+    name: vector-rag-network
+
+volumes:
+  redis-data:
+    driver: local

@@ -20,6 +20,7 @@ import { ensureUnique } from './utils/idempotency.js';
 
 // Configuración del servidor Express
 const app = express();
+app.set('trust proxy', true);
 app.use(express.json({ limit: '1mb' }));
 
 /**
@@ -53,6 +54,8 @@ app.get('/webhook', (req, res) => {
 app.post('/webhook', async (req, res) => {
   try {
     // Extrae la información del mensaje desde el payload de WhatsApp
+    console.log('[WhatsApp Webhook] Payload recibido:', JSON.stringify(req.body, null, 2));
+
     const change = req?.body?.entry?.[0]?.changes?.[0];
     const value = change?.value;
     const msg = value?.messages?.[0];
