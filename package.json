@@ -9,8 +9,7 @@
   },
   "scripts": {
     "enqueue:campaign": "node mailer/examples/enqueue-campaign.js",
-    "enqueue:from-xlsx": "node mailer/examples/enqueue-from-xlsx.js",
-    "whatsapp:webhook": "node whatsapp/src/webhook.js",
+    "enqueue:from-xlsx": "node mailer/examples/enqueue-from-xlsx.js",    
     "start": "node send-test.js",
     "server": "node src/server.js",
     "dev": "node --watch src/server.js",

@@ -13,12 +13,17 @@ import authRoutes from './routes/auth.routes.js';
 import campaignRoutes from './routes/campaign.routes.js';
 import { authenticate } from '../auth/middleware/auth.middleware.js';
 import { errorHandler, notFoundHandler } from './errors/errorHandler.js';
+import { handleUserQuestion } from '../whatsapp/src/orchestrator.js';
+import { ensureUnique } from '../whatsapp/src/utils/idempotency.js';
+
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 const app = express();
 const NODE_ENV = process.env.NODE_ENV || 'development';
+app.set('trust proxy', true); // importante porque estás detrás de Nginx
+
 
 // Tiempo de inicio del servidor
 const startTime = Date.now();
@@ -83,6 +88,71 @@ app.get('/api/protected', authenticate, (req, res) => {
     user: req.user,
   });
 });
+
+// ===================== WHATSAPP WEBHOOK =====================
+
+// GET /whatsapp/webhook -> verificación de Meta
+app.get('/whatsapp/webhook', (req, res) => {
+  const mode = req.query['hub.mode'];
+  const token = req.query['hub.verify_token'];
+  const challenge = req.query['hub.challenge'];
+
+  if (mode === 'subscribe' && token === process.env.WA_VERIFY_TOKEN) {
+    console.log('[WhatsApp Webhook] Verificación OK');
+    return res.status(200).send(challenge);
+  }
+
+  console.warn('[WhatsApp Webhook] Verificación FALLIDA', { mode, token });
+  return res.sendStatus(403);
+});
+
+// POST /whatsapp/webhook -> mensajes + estados
+app.post('/whatsapp/webhook', async (req, res) => {
+  try {
+    console.log(
+      '[WhatsApp Webhook] Payload recibido:',
+      JSON.stringify(req.body, null, 2)
+    );
+
+    const change = req?.body?.entry?.[0]?.changes?.[0];
+    const value = change?.value;
+
+    // 1) Eventos de estado (sent, delivered, failed, etc.)
+    const status = value?.statuses?.[0];
+    if (status) {
+      console.log('[WA STATUS]', {
+        msgId: status.id,
+        status: status.status,
+        errors: status.errors,
+      });
+    }
+
+    // 2) Mensajes entrantes de texto
+    const msg = value?.messages?.[0];
+    if (msg?.type === 'text') {
+      const messageId = msg.id;
+      const from = msg.from;
+      const text = msg.text?.body || '';
+
+      const key = `wa:msg:${messageId}`;
+      const isNew = await ensureUnique(key);
+      if (!isNew) {
+        return res.sendStatus(200);
+      }
+
+      await handleUserQuestion({ fromE164: from, userQuestion: text });
+    }
+
+    return res.sendStatus(200);
+  } catch (err) {
+    console.error('Webhook error:', err?.response?.data || err?.message);
+    return res.sendStatus(500);
+  }
+});
+
+// ================== FIN WHATSAPP WEBHOOK ====================
+
+
 
 // Middleware de manejo de rutas no encontradas (404)
 app.use(notFoundHandler);
