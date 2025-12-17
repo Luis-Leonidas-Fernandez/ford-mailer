@@ -3,6 +3,8 @@ import axios from 'axios';
 import { CampaignModel } from '../models/Campaign.js';
 import { TenantModel } from '../models/Tenant.js';
 import { runFordCampaign } from '../../mailer/campaign/core.js';
+import { runFordWhatsAppCampaign } from '../../mailer/campaign/whatsapp.js';
+import { normalizePhone, normalizeWhatsAppPhone, isValidE164 } from '../../mailer/utils/phone.js';
 
 const VECTOR_RAG_BASE_URL =
   process.env.VECTOR_RAG_SERVICE_URL ||
@@ -33,75 +35,223 @@ function getTenantAndUserFromReq(req) {
  * @param {string} params.campaignId
  */
 export async function sendCampaignCore({ tenantId, campaignId }) {
-  console.log('[CampaignCore] Iniciando envío de campaña', {
-    tenantId,
-    campaignId,
+  const startTime = Date.now();
+  const timestamp = new Date().toISOString();
+  
+  console.log('[CampaignCore] ========================================');
+  console.log('[CampaignCore] INICIANDO ENVÍO DE CAMPAÑA', {
+    timestamp,
+    campaignId: campaignId?.toString(),
+    tenantId: tenantId?.toString(),
+    nombreCampaña: '...', // Se actualizará después de cargar
   });
 
   const campaign = await CampaignModel.findById(campaignId);
   if (!campaign) {
+    console.error('[CampaignCore] ERROR: Campaña no encontrada', {
+      campaignId: campaignId?.toString(),
+      timestamp: new Date().toISOString(),
+    });
     throw new Error(`Campaign ${campaignId} no encontrada`);
   }
+
+  console.log('[CampaignCore] Campaña cargada desde DB', {
+    campaignId: campaign._id?.toString(),
+    nombreCampaña: campaign.nombreCampaña,
+    estado: campaign.estado,
+    canales: campaign.canales,
+    segmentId: campaign.segmentId?.toString(),
+    timestamp: new Date().toISOString(),
+  });
 
   const { segmentId, jwtToken } = campaign;
 
   // 1) construir headers para llamada a vector-rag (reutiliza JWT si está disponible)
+  console.log('[CampaignCore] Preparando llamada a Vector-RAG', {
+    campaignId: campaign._id?.toString(),
+    segmentId: segmentId?.toString(),
+    vectorRagUrl: VECTOR_RAG_BASE_URL,
+    timestamp: new Date().toISOString(),
+  });
+
   const ragHeaders = {};
   if (jwtToken) {
     ragHeaders.Authorization = `Bearer ${jwtToken}`;
-    console.log('[CampaignCore] Reutilizando Authorization para llamada a vector-rag (background)', {
+    console.log('[CampaignCore] JWT Token disponible para Vector-RAG', {
+      campaignId: campaign._id?.toString(),
       hasJwtToken: true,
       authorizationHeaderPreview: `Bearer ${String(jwtToken).slice(0, 10)}...`,
+      timestamp: new Date().toISOString(),
     });
   } else {
-    console.warn(
-      '[CampaignCore] Campaign no tiene jwtToken guardado, llamada a vector-rag irá SIN Authorization'
-    );
+    console.warn('[CampaignCore] ADVERTENCIA: Sin JWT Token', {
+      campaignId: campaign._id?.toString(),
+      message: 'Llamada a vector-rag irá SIN Authorization',
+      timestamp: new Date().toISOString(),
+    });
   }
 
-// 2) obtener segmento desde vector-rag
-const segmentResponse = await axios.get(
-  `${VECTOR_RAG_BASE_URL}/api/segments/${segmentId}`,
-  { headers: ragHeaders }
-);
+  // 2) obtener segmento desde vector-rag
+  console.log('[CampaignCore] Obteniendo segmento desde Vector-RAG...', {
+    campaignId: campaign._id?.toString(),
+    segmentId: segmentId?.toString(),
+    timestamp: new Date().toISOString(),
+  });
 
-// La API de vector-rag envuelve el segmento en data.segment
-const apiResponse = segmentResponse.data || {};
-const segmento = apiResponse.data?.segment || {};
-const clientes = Array.isArray(segmento.clientes) ? segmento.clientes : [];
+  const segmentResponse = await axios.get(
+    `${VECTOR_RAG_BASE_URL}/api/segments/${segmentId}`,
+    { headers: ragHeaders }
+  );
 
-console.log('[CampaignCore] Segmento recibido desde RAG', {
-  campaignId: campaign._id?.toString(),
-  rawClientesCount: clientes.length,
-});
+  // La API de vector-rag envuelve el segmento en data.segment
+  const apiResponse = segmentResponse.data || {};
+  const segmento = apiResponse.data?.segment || {};
+  const clientes = Array.isArray(segmento.clientes) ? segmento.clientes : [];
 
-  // 2) dedupe + validación de emails
-  const seen = new Set();
-  const contacts = [];
+  console.log('[CampaignCore] Segmento recibido desde Vector-RAG', {
+    campaignId: campaign._id?.toString(),
+    segmentId: segmentId?.toString(),
+    rawClientesCount: clientes.length,
+    hasImageUrls: Array.isArray(segmento.imageUrlPromo) && segmento.imageUrlPromo.length > 0,
+    imageUrlsCount: Array.isArray(segmento.imageUrlPromo) ? segmento.imageUrlPromo.length : 0,
+    timestamp: new Date().toISOString(),
+  });
+
+  // 2) Normalizar canales a minúsculas
+  const canales = (campaign.canales || []).map(c => String(c).toLowerCase().trim());
+  console.log('[CampaignCore] Canales configurados', {
+    campaignId: campaign._id?.toString(),
+    canalesOriginales: campaign.canales,
+    canalesNormalizados: canales,
+    timestamp: new Date().toISOString(),
+  });
+
+  // 3) Procesar contactos: separar email y WhatsApp
+  console.log('[CampaignCore] Iniciando procesamiento de contactos', {
+    campaignId: campaign._id?.toString(),
+    totalClientes: clientes.length,
+    canales: canales,
+    timestamp: new Date().toISOString(),
+  });
+
+  const seenEmails = new Set();
+  const seenPhones = new Set();
+  const emailContacts = [];
+  const whatsappContacts = [];
+  let emailInvalidos = 0;
+  let whatsappInvalidos = 0;
+  let emailDuplicados = 0;
+  let whatsappDuplicados = 0;
 
   for (const c of clientes) {
     if (!c) continue;
-    const email = String(c.email || '').trim();
-    if (!email || !EMAIL_RE.test(email)) continue;
-    if (seen.has(email)) continue;
-    seen.add(email);
 
-    contacts.push({
-      email,
-      nombre: c.nombre,
-    });
+    // Procesar email si el canal incluye 'email'
+    if (canales.includes('email')) {
+      const email = String(c.email || '').trim();
+      if (!email) {
+        emailInvalidos++;
+      } else if (!EMAIL_RE.test(email)) {
+        emailInvalidos++;
+      } else if (seenEmails.has(email)) {
+        emailDuplicados++;
+      } else {
+        seenEmails.add(email);
+        emailContacts.push({
+          email,
+          nombre: c.nombre,
+          vehiculo: c.vehiculo,
+        });
+      }
+    }
+
+    // Procesar WhatsApp si el canal incluye 'whatsapp'
+    if (canales.includes('whatsapp')) {
+      const defaultCountry = process.env.DEFAULT_PHONE_COUNTRY || 'AR';
+      let phoneE164 = null;
+
+      // Primero intentar telefonoE164 pero NORMALIZAR SIEMPRE
+      // (puede venir con +, espacios, como número, etc.)
+      if (c.telefonoE164) {
+        const toRaw = c.telefonoE164;
+        phoneE164 = normalizeWhatsAppPhone(toRaw, defaultCountry);
+        // Log cuando se normaliza (útil para debugging)
+        if (phoneE164 && toRaw !== phoneE164) {
+          console.log('[WhatsApp] Número normalizado', {
+            raw: toRaw,
+            normalized: phoneE164,
+            campaignId: campaign._id?.toString(),
+          });
+        }
+      }
+
+      // Si no salió, intentar telefonoRaw
+      if (!phoneE164 && c.telefonoRaw) {
+        const toRaw = c.telefonoRaw;
+        phoneE164 = normalizeWhatsAppPhone(toRaw, defaultCountry);
+        // Log cuando se normaliza (útil para debugging)
+        if (phoneE164 && toRaw !== phoneE164) {
+          console.log('[WhatsApp] Número normalizado desde telefonoRaw', {
+            raw: toRaw,
+            normalized: phoneE164,
+            campaignId: campaign._id?.toString(),
+          });
+        }
+      }
+
+      // Validar formato E.164 sin '+'
+      if (!phoneE164) {
+        whatsappInvalidos++;
+      } else if (!isValidE164(phoneE164)) {
+        whatsappInvalidos++;
+      } else if (seenPhones.has(phoneE164)) {
+        whatsappDuplicados++;
+      } else {
+        seenPhones.add(phoneE164);
+        whatsappContacts.push({
+          telefonoE164: phoneE164,
+          nombre: c.nombre,
+          vehiculo: c.vehiculo,
+        });
+      }
+    }
   }
 
-  if (contacts.length === 0) {
+  const hasEmail = canales.includes('email') && emailContacts.length > 0;
+  const hasWhatsApp = canales.includes('whatsapp') && whatsappContacts.length > 0;
+
+  console.log('[CampaignCore] Resumen de procesamiento de contactos', {
+    campaignId: campaign._id?.toString(),
+    totalClientes: clientes.length,
+    email: {
+      validos: emailContacts.length,
+      invalidos: emailInvalidos,
+      duplicados: emailDuplicados,
+      canalActivo: canales.includes('email'),
+    },
+    whatsapp: {
+      validos: whatsappContacts.length,
+      invalidos: whatsappInvalidos,
+      duplicados: whatsappDuplicados,
+      canalActivo: canales.includes('whatsapp'),
+    },
+    timestamp: new Date().toISOString(),
+  });
+
+  if (!hasEmail && !hasWhatsApp) {
     // Nada para enviar, el caller decidirá marcar COMPLETADA
-    console.log('[CampaignCore] No hay contactos válidos luego de dedupe/validación', {
+    console.warn('[CampaignCore] ADVERTENCIA: No hay contactos válidos para enviar', {
       campaignId: campaign._id?.toString(),
       rawClientesCount: clientes.length,
+      emailContacts: emailContacts.length,
+      whatsappContacts: whatsappContacts.length,
+      canales: canales,
+      timestamp: new Date().toISOString(),
     });
     return;
   }
 
-  // 3) construir promos y config de campaña para el motor Ford Mailer
+  // 4) construir promos y config de campaña para el motor Ford Mailer
   // Usar imageUrlPromo del segmento (array de URLs)
   const imageUrlsFromSegment = Array.isArray(segmento.imageUrlPromo) 
     ? segmento.imageUrlPromo 
@@ -162,25 +312,88 @@ console.log('[CampaignCore] Segmento recibido desde RAG', {
       process.env.CAMPAIGN_CTA_LABEL || 'Escribime',
   };
 
-  // 4) Ejecutar campaña usando el motor existente (cola BullMQ + Resend/Gmail)
-  console.log('[CampaignCore] Ejecutando runFordCampaign', {
-    campaignId: campaign._id?.toString(),
-    contactsCount: contacts.length,
-    promosCount: promos.length,
-  });
-  await runFordCampaign({
-    contacts,
-    promos,
-    vendor,
-    campaign: campaignConfig,
-    options: {
+  // 5) Ejecutar campañas según canales
+  const emailStartTime = hasEmail ? Date.now() : null;
+  const whatsappStartTime = hasWhatsApp ? Date.now() : null;
+
+  // Ejecutar email si corresponde
+  if (hasEmail) {
+    console.log('[CampaignCore] ========================================');
+    console.log('[CampaignCore] INICIANDO CAMPAÑA EMAIL', {
+      campaignId: campaign._id?.toString(),
+      contactsCount: emailContacts.length,
+      promosCount: promos.length,
       rps: Number(process.env.MAILER_RATE_LIMIT_MAX_RPS || '5'),
-    },
-  });
-  console.log('[CampaignCore] runFordCampaign finalizado', {
+      timestamp: new Date().toISOString(),
+    });
+    
+    await runFordCampaign({
+      contacts: emailContacts,
+      promos,
+      vendor,
+      campaign: campaignConfig,
+      campaignObj: campaign, // Pasar objeto completo para logs y campaignId
+      options: {
+        rps: Number(process.env.MAILER_RATE_LIMIT_MAX_RPS || '5'),
+      },
+    });
+    
+    const emailDuration = Date.now() - emailStartTime;
+    console.log('[CampaignCore] CAMPAÑA EMAIL FINALIZADA', {
+      campaignId: campaign._id?.toString(),
+      contactsCount: emailContacts.length,
+      duracionMs: emailDuration,
+      duracionSeg: Math.round(emailDuration / 1000),
+      timestamp: new Date().toISOString(),
+    });
+  }
+
+  // Ejecutar WhatsApp si corresponde
+  if (hasWhatsApp) {
+    console.log('[CampaignCore] ========================================');
+    console.log('[CampaignCore] INICIANDO CAMPAÑA WHATSAPP', {
+      campaignId: campaign._id?.toString(),
+      contactsCount: whatsappContacts.length,
+      promosCount: promos.length,
+      templateName: campaign.plantillaWhatsApp?.templateName || process.env.WHATSAPP_TEMPLATE_NAME || 'promo_ford_mes',
+      languageCode: campaign.plantillaWhatsApp?.languageCode || process.env.WHATSAPP_LANGUAGE_CODE || 'es_AR',
+      rateLimitRps: Number(process.env.WHATSAPP_RATE_LIMIT_MAX_RPS || '2'),
+      timestamp: new Date().toISOString(),
+    });
+    
+    await runFordWhatsAppCampaign({
+      contacts: whatsappContacts,
+      promos,
+      vendor,
+      campaign, // Pasar el objeto campaign completo para metrics y plantillaWhatsApp
+      options: {
+        templateName: campaign.plantillaWhatsApp?.templateName,
+        languageCode: campaign.plantillaWhatsApp?.languageCode,
+      },
+    });
+    
+    const whatsappDuration = Date.now() - whatsappStartTime;
+    console.log('[CampaignCore] CAMPAÑA WHATSAPP FINALIZADA', {
+      campaignId: campaign._id?.toString(),
+      contactsCount: whatsappContacts.length,
+      duracionMs: whatsappDuration,
+      duracionSeg: Math.round(whatsappDuration / 1000),
+      timestamp: new Date().toISOString(),
+    });
+  }
+
+  const totalDuration = Date.now() - startTime;
+  console.log('[CampaignCore] ========================================');
+  console.log('[CampaignCore] ENVÍO DE CAMPAÑA COMPLETADO', {
     campaignId: campaign._id?.toString(),
-    contactsCount: contacts.length,
+    nombreCampaña: campaign.nombreCampaña,
+    email: hasEmail ? { contactos: emailContacts.length } : null,
+    whatsapp: hasWhatsApp ? { contactos: whatsappContacts.length } : null,
+    duracionTotalMs: totalDuration,
+    duracionTotalSeg: Math.round(totalDuration / 1000),
+    timestamp: new Date().toISOString(),
   });
+  console.log('[CampaignCore] ========================================');
 }
 
 /**
@@ -196,6 +409,7 @@ export const createCampaignFromRag = async (req, res) => {
       nombreCampaña,
       canales,
       plantillaEmail,
+      plantillaWhatsApp,
     } = req.body || {};
 
     console.log('[Campaign] createCampaignFromRag request recibida', {
@@ -269,21 +483,33 @@ export const createCampaignFromRag = async (req, res) => {
       });
     }
 
+    // Normalizar canales a minúsculas antes de guardar
+    const normalizedCanales = (canales || []).map(c => String(c).toLowerCase().trim());
+
     const campaign = await CampaignModel.create({
       tenantId,
       userId,
       segmentId,
       nombreCampaña,
-      canales,
+      canales: normalizedCanales, // Siempre guardar en minúsculas
       plantillaEmail,
+      plantillaWhatsApp,
       estado: 'CREADA',
       jwtToken,
     });
 
-    console.log('[Campaign] Campaña creada en DB', {
+    console.log('[Campaign] ========================================');
+    console.log('[Campaign] CAMPAÑA CREADA EN DB', {
       campaignId: campaign._id?.toString(),
-      tenantId,
-      userId,
+      nombreCampaña: campaign.nombreCampaña,
+      tenantId: tenantId?.toString(),
+      userId: userId?.toString(),
+      segmentId: segmentId?.toString(),
+      canales: normalizedCanales,
+      hasPlantillaEmail: !!plantillaEmail,
+      hasPlantillaWhatsApp: !!plantillaWhatsApp,
+      estado: campaign.estado,
+      timestamp: new Date().toISOString(),
     });
 
     // Marcar ENVIANDO y disparar envío en background
@@ -291,18 +517,37 @@ export const createCampaignFromRag = async (req, res) => {
     campaign.lastError = null;
     await campaign.save();
 
+    console.log('[Campaign] Estado actualizado a ENVIANDO', {
+      campaignId: campaign._id?.toString(),
+      timestamp: new Date().toISOString(),
+    });
+
     const id = campaign._id;
 
     // Disparar envío en background (no bloquear la request)
+    console.log('[Campaign] Iniciando envío en background', {
+      campaignId: id.toString(),
+      timestamp: new Date().toISOString(),
+    });
+    
     sendCampaignCore({ tenantId, campaignId: id })
       .then(async () => {
         await CampaignModel.findByIdAndUpdate(id, {
           estado: 'COMPLETADA',
           lastError: null,
         });
+        console.log('[Campaign] Campaña marcada como COMPLETADA', {
+          campaignId: id.toString(),
+          timestamp: new Date().toISOString(),
+        });
       })
       .catch(async (err) => {
-        console.error('[createCampaignFromRag] Error en background:', err);
+        console.error('[Campaign] ERROR: Fallo en envío de campaña', {
+          campaignId: id.toString(),
+          error: err.message,
+          stack: err.stack,
+          timestamp: new Date().toISOString(),
+        });
         await CampaignModel.findByIdAndUpdate(id, {
           estado: 'FALLIDA',
           lastError: err.message || 'Error desconocido al enviar campaña',
@@ -362,22 +607,50 @@ export const sendCampaign = async (req, res) => {
     }
 
     // 1) marcar ENVIANDO y limpiar último error
+    console.log('[Campaign] ========================================');
+    console.log('[Campaign] INICIANDO ENVÍO MANUAL DE CAMPAÑA', {
+      campaignId: campaign._id?.toString(),
+      nombreCampaña: campaign.nombreCampaña,
+      estadoAnterior: campaign.estado,
+      canales: campaign.canales,
+      timestamp: new Date().toISOString(),
+    });
+
     campaign.estado = 'ENVIANDO';
     campaign.lastError = null;
     await campaign.save();
 
+    console.log('[Campaign] Estado actualizado a ENVIANDO', {
+      campaignId: campaign._id?.toString(),
+      timestamp: new Date().toISOString(),
+    });
+
     const id = campaign._id;
 
     // 2) disparar envío en background (NO await)
+    console.log('[Campaign] Disparando envío en background', {
+      campaignId: id.toString(),
+      timestamp: new Date().toISOString(),
+    });
+    
     sendCampaignCore({ tenantId, campaignId: id })
       .then(async () => {
         await CampaignModel.findByIdAndUpdate(id, {
           estado: 'COMPLETADA',
           lastError: null,
         });
+        console.log('[Campaign] Campaña marcada como COMPLETADA', {
+          campaignId: id.toString(),
+          timestamp: new Date().toISOString(),
+        });
       })
       .catch(async (err) => {
-        console.error('[sendCampaign] Error en background:', err);
+        console.error('[Campaign] ERROR: Fallo en envío de campaña', {
+          campaignId: id.toString(),
+          error: err.message,
+          stack: err.stack,
+          timestamp: new Date().toISOString(),
+        });
         await CampaignModel.findByIdAndUpdate(id, {
           estado: 'FALLIDA',
           lastError: err.message || 'Error desconocido al enviar campaña',

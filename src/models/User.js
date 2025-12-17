@@ -9,10 +9,9 @@ const userSchema = new mongoose.Schema({
   email: {
     type: String,
     required: [true, 'El email es requerido'],
-    unique: true,
+    unique: true,  // unique ya crea índice automáticamente
     lowercase: true,
     trim: true,
-    index: true,
     match: [/^\S+@\S+\.\S+$/, 'Por favor ingresa un email válido'],
   },
   password: {
@@ -41,11 +40,8 @@ const userSchema = new mongoose.Schema({
     default: 'user',
   },
 }, {
-  timestamps: true, // Crea createdAt y updatedAt automáticamente
+  timestamps: true,
 });
-
-// Índice para búsqueda rápida por email
-userSchema.index({ email: 1 });
 
 // Método para generar token de verificación
 userSchema.methods.generateVerificationToken = function() {

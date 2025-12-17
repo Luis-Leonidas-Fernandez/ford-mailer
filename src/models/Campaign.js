@@ -44,6 +44,30 @@ const CampaignSchema = new Schema(
       },
     },
 
+    plantillaWhatsApp: {
+      templateName: {
+        type: String,
+      },
+      languageCode: {
+        type: String,
+        default: 'es_AR',
+      },
+    },
+
+    metrics: {
+      whatsapp: {
+        encolados: { type: Number, default: 0 },
+        omitidos: { type: Number, default: 0 },
+        enviados: { type: Number, default: 0 },
+        fallidos: { type: Number, default: 0 },
+      },
+      email: {
+        encolados: { type: Number, default: 0 },
+        enviados: { type: Number, default: 0 },
+        fallidos: { type: Number, default: 0 },
+      },
+    },
+
     estado: {
       type: String,
       enum: ['CREADA', 'ENVIANDO', 'COMPLETADA', 'FALLIDA'],

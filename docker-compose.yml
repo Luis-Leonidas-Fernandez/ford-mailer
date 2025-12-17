@@ -33,6 +33,22 @@ services:
     networks:
       - ford-mailer_default
 
+  worker-whatsapp:
+    image: node:18-alpine
+    container_name: ford-mailer-worker-whatsapp
+    working_dir: /usr/src/app
+    volumes:
+      - .:/usr/src/app
+    command: ["npm", "run", "dev:worker:whatsapp"]
+    env_file:
+      - .env
+    environment:
+      - REDIS_URL=redis://redis:6379
+    depends_on:
+      - redis
+    networks:
+      - ford-mailer_default
+
   api:
     image: node:18-alpine
     container_name: ford-mailer-api

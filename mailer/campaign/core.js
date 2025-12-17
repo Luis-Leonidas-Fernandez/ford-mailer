@@ -42,15 +42,33 @@ export async function runFordCampaign({
   promos,                 // array de promos
   vendor,                 // { nombre, phoneE164 }
   campaign,               // { subject, brandTitle, brandSubtitle, brandLogoUrl, dealershipName, dealershipAddress, contactPhone, ctaLabel }
+  campaignObj,            // Objeto Campaign completo de MongoDB (opcional, para logs)
   options = {},           // { rps?, attempts?, backoffMs?, removeOnComplete?, removeOnFail? }
 }) {
+  const startTime = Date.now();
+  const campaignId = campaignObj?._id?.toString() || 'unknown';
+  
   // Configuración de rate limiting y reintentos
   const rps = options.rps ?? Math.max(config.maxRps, 1);
   const delayBetweenJobsMs = Math.floor(1000 / rps);
   const attempts = options.attempts ?? 3;
   const backoffMs = options.backoffMs ?? 15_000;
 
+  console.log('[Email Campaign] Configuración de campaña', {
+    campaignId,
+    rps,
+    delayBetweenJobsMs,
+    attempts,
+    backoffMs,
+    contactsCount: Array.isArray(contacts) ? contacts.length : 'iterable',
+    promosCount: promos?.length || 0,
+    timestamp: new Date().toISOString(),
+  });
+
   let i = 0;
+  let encolados = 0;
+  let erroresEncolado = 0;
+  
   // Procesa cada contacto de forma secuencial respetando el rate limit
   for await (const cli of contacts) {
     i++;
@@ -81,38 +99,80 @@ export async function runFordCampaign({
       unsubscribeUrl,
     };
 
-    // Renderiza las plantillas HTML y texto con el contexto personalizado
-    const { html, text } = await renderFordPromos(ctx);
+    try {
+      // Renderiza las plantillas HTML y texto con el contexto personalizado
+      const renderStart = Date.now();
+      const { html, text } = await renderFordPromos(ctx);
+      const renderDuration = Date.now() - renderStart;
 
-    // Encola el email con configuración de reintentos y headers especializados
-    await enqueueEmail(
-      {
-        to: cli.email,
-        subject: `${campaign.subject} — ${cli.nombre || 'Cliente'}`,
-        html,
-        text,
-        from: config.from,
-        headers: {
-          // Headers para cumplir con estándares de desuscripción
-          'List-Unsubscribe': `<mailto:unsubscribe@inricompany.com?subject=UNSUBSCRIBE>, <${unsubscribeUrl}>`,
-          'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
-          'X-Campaign': 'ford-promos',
+      // Encola el email con configuración de reintentos y headers especializados
+      const enqueueStart = Date.now();
+      await enqueueEmail(
+        {
+          to: cli.email,
+          subject: `${campaign.subject} — ${cli.nombre || 'Cliente'}`,
+          html,
+          text,
+          from: config.from,
+          campaignId, // Agregar campaignId para métricas
+          headers: {
+            // Headers para cumplir con estándares de desuscripción
+            'List-Unsubscribe': `<mailto:unsubscribe@inricompany.com?subject=UNSUBSCRIBE>, <${unsubscribeUrl}>`,
+            'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
+            'X-Campaign': 'ford-promos',
+            'X-Campaign-Id': campaignId,
+          },
         },
-      },
-      {
-        attempts,
-        backoff: { type: 'exponential', delay: backoffMs },
-        removeOnComplete: true,
-        removeOnFail: 1000,
+        {
+          attempts,
+          backoff: { type: 'exponential', delay: backoffMs },
+          removeOnComplete: true,
+          removeOnFail: 1000,
+        }
+      );
+      encolados++;
+      const enqueueDuration = Date.now() - enqueueStart;
+
+      // Log detallado cada 50 contactos o en el primero
+      if (i === 1 || i % 50 === 0) {
+        console.log('[Email Campaign] Progreso de encolado', {
+          campaignId,
+          procesados: i,
+          encolados,
+          errores: erroresEncolado,
+          email: cli.email,
+          renderMs: renderDuration,
+          enqueueMs: enqueueDuration,
+          timestamp: new Date().toISOString(),
+        });
       }
-    );
+    } catch (error) {
+      erroresEncolado++;
+      console.error('[Email Campaign] Error al encolar email', {
+        campaignId,
+        contacto: i,
+        email: cli.email,
+        error: error.message,
+        stack: error.stack,
+        timestamp: new Date().toISOString(),
+      });
+    }
 
     // Aplica rate limiting entre envíos
     if (delayBetweenJobsMs > 0) await sleep(delayBetweenJobsMs);
-    
-    // Muestra progreso cada 200 contactos procesados
-    if (i % 200 === 0) console.log(`[Campaign] Encolados ${i} contactos...`);
   }
 
-  console.log('[Campaign] Finalizada la encolación.');
+  const totalDuration = Date.now() - startTime;
+  console.log('[Email Campaign] ========================================');
+  console.log('[Email Campaign] ENCOLACIÓN FINALIZADA', {
+    campaignId,
+    totalProcesados: i,
+    encolados,
+    errores: erroresEncolado,
+    duracionMs: totalDuration,
+    duracionSeg: Math.round(totalDuration / 1000),
+    promedioMsPorContacto: i > 0 ? Math.round(totalDuration / i) : 0,
+    timestamp: new Date().toISOString(),
+  });
+  console.log('[Email Campaign] ========================================');
 }

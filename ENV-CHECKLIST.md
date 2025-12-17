@@ -40,10 +40,15 @@ Verifica que tengas estas variables en tu `.env`:
 - [ ] `GMAIL_FROM`
 
 ### WhatsApp (solo si usas WhatsApp)
-- [ ] `WA_PHONE_NUMBER_ID`
-- [ ] `WA_ACCESS_TOKEN`
-- [ ] `WA_VERIFY_TOKEN`
+- [ ] `WA_PHONE_NUMBER_ID` - ID del número de teléfono de WhatsApp Business
+- [ ] `WA_ACCESS_TOKEN` - Token de acceso de WhatsApp Business API
+- [ ] `WA_VERIFY_TOKEN` - Token de verificación para webhooks
 - [ ] `PORT` - Puerto del webhook (default: 3000)
+- [ ] `WHATSAPP_RATE_LIMIT_MAX_RPS` - Mensajes por segundo (default: 2)
+- [ ] `WHATSAPP_TEMPLATE_NAME` - Nombre de la plantilla aprobada (default: `promo_ford_mes`)
+- [ ] `WHATSAPP_LANGUAGE_CODE` - Código de idioma de la plantilla (default: `es_AR`)
+- [ ] `WHATSAPP_TEMPLATE_BODY_PARAMS_COUNT` - Cantidad de variables en el cuerpo de la plantilla (default: 2)
+- [ ] `DEFAULT_PHONE_COUNTRY` - País por defecto para normalización de teléfonos (default: `AR`)
 
 ### IA (solo si usas el sistema de IA)
 - [ ] `LLM_ENDPOINT` - Endpoint del modelo Qwen

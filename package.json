@@ -14,6 +14,8 @@
     "server": "node src/server.js",
     "dev": "node --watch src/server.js",
     "dev:worker": "node mailer/worker.js",
+    "dev:worker:whatsapp": "node mailer/whatsapp-worker.js",
+    "dev:workers": "npm-run-all --parallel dev:worker dev:worker:whatsapp",
     "enqueue:now": "node mailer/examples/enqueue-now.js",
     "enqueue:later": "node mailer/examples/enqueue-later.js",
     "send:fancy": "node mailer/examples/send-fancy.js",
@@ -23,7 +25,8 @@
     "fix:clientes": "node scripts/fix-clientes.mjs",
     "campaign:complete": "npm-run-all fix:clientes --parallel dev:worker enqueue:from-xlsx",
     "check:deps": "npm outdated",
-    "check:env": "node scripts/check-env.js"
+    "check:env": "node scripts/check-env.js",
+    "ngrok": "node scripts/ngrok.js"
   },
   "keywords": [
     "mailer",
@@ -47,6 +50,7 @@
     "handlebars": "^4.7.8",
     "ioredis": "^5.7.0",
     "jsonwebtoken": "^9.0.0",
+    "libphonenumber-js": "^1.11.0",
     "mongoose": "^8.0.0",
     "morgan": "^1.10.0",
     "resend": "^6.0.2",
