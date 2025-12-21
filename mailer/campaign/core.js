@@ -126,7 +126,7 @@ export async function runFordCampaign({
         {
           attempts,
           backoff: { type: 'exponential', delay: backoffMs },
-          removeOnComplete: true,
+          removeOnComplete: 200,
           removeOnFail: 1000,
         }
       );
