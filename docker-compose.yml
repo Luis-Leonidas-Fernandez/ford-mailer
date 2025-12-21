@@ -28,7 +28,7 @@ services:
     working_dir: /usr/src/app
     volumes:
       - .:/usr/src/app
-    command: ["npm", "run", "dev:worker"]
+    command: ["npm", "run", "start:worker"]
     env_file:
       - .env
     environment:
@@ -45,7 +45,7 @@ services:
     working_dir: /usr/src/app
     volumes:
       - .:/usr/src/app
-    command: ["npm", "run", "dev:worker:whatsapp"]
+    command: ["npm", "run", "start:worker:whatsapp"]
     env_file:
       - .env
     environment:
@@ -62,7 +62,7 @@ services:
     working_dir: /usr/src/app
     volumes:
       - .:/usr/src/app
-    command: ["npm", "run", "dev"]
+    command: ["npm", "run", "start"]
     env_file:
       - .env
     environment:

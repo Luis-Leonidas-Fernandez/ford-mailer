@@ -8,9 +8,11 @@
     "node": ">=18.17"
   },
   "scripts": {
+    "start": "node src/server.js",
+    "start:worker": "node mailer/worker.js",
+    "start:worker:whatsapp": "node mailer/whatsapp-worker.js",
     "enqueue:campaign": "node mailer/examples/enqueue-campaign.js",
-    "enqueue:from-xlsx": "node mailer/examples/enqueue-from-xlsx.js",    
-    "start": "node send-test.js",
+    "enqueue:from-xlsx": "node mailer/examples/enqueue-from-xlsx.js",   
     "server": "node src/server.js",
     "dev": "node --watch src/server.js",
     "dev:worker": "node mailer/worker.js",
