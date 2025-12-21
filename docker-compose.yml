@@ -25,6 +25,7 @@ services:
   worker:
     image: node:18-alpine
     container_name: ford-mailer-worker
+    restart: unless-stopped
     working_dir: /usr/src/app
     volumes:
       - .:/usr/src/app
@@ -42,6 +43,7 @@ services:
   worker-whatsapp:
     image: node:18-alpine
     container_name: ford-mailer-worker-whatsapp
+    restart: unless-stopped
     working_dir: /usr/src/app
     volumes:
       - .:/usr/src/app
@@ -59,6 +61,7 @@ services:
   api:
     image: node:18-alpine
     container_name: ford-mailer-api
+    restart: unless-stopped
     working_dir: /usr/src/app
     volumes:
       - .:/usr/src/app
