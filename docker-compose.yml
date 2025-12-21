@@ -1,9 +1,7 @@
-services: 
+services:
   redis:
     image: redis:7-alpine
     container_name: ford-mailer-redis
-    ports:
-      - "6379:6379"
     volumes:
       - redis-data:/data
     command: ["redis-server", "--appendonly", "yes", "--replica-read-only", "no"]
@@ -59,18 +57,14 @@ services:
     environment:
       - REDIS_URL=redis://redis:6379
     ports:
-      - "3000:3000"
+      - "3005:3000"   # (como ya lo tenés por docker ps)
     depends_on:
       - redis
     networks:
       - ford-mailer_default
-      - vector-rag-network
 
 networks:
   ford-mailer_default: {}
-  vector-rag-network:
-    external: true
-    name: vector-rag-network
 
 volumes:
   redis-data:
