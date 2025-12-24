@@ -28,7 +28,8 @@ export function normalizePhone(raw, defaultCountry = 'AR') {
 /**
  * Normaliza número PARA WHATSAPP.
  * - E.164 sin '+'
- * - Aplica correcciones especiales (Argentina mobile "9", remover '15' cuando aplique)
+ * - Aplica correcciones especiales (remover '15' cuando aplique)
+ * - NO modifica el formato del número si ya viene correcto (Meta/WhatsApp maneja el formato internamente)
  *
  * @param {string|number|null|undefined} raw - Número de teléfono en cualquier formato
  * @param {string} defaultCountry - Código de país por defecto (ej: 'AR')
@@ -42,8 +43,8 @@ export function normalizeWhatsAppPhone(raw, defaultCountry = 'AR') {
   if (!normalized) return null;
 
   // 2) Ajustes WhatsApp específicos por país (cuando hay reglas raras en datasets)
-  // Argentina: WhatsApp móvil suele requerir 54 + 9 + (area + subscriber)
-  // Muchos datos vienen como 54 + area + subscriber (sin 9) o con "15" embebido.
+  // Argentina: Algunos datasets incluyen "15" embebido que debe removerse
+  // Meta/WhatsApp ya maneja el formato correcto internamente, no agregamos '9' automáticamente
   if (normalized.startsWith('54')) {
     let n = normalized;
 
@@ -59,12 +60,10 @@ export function normalizeWhatsAppPhone(raw, defaultCountry = 'AR') {
       }
     }
 
-    // b) Asegurar el '9' después de 54 si parece móvil sin 9.
-    // Si ya tiene 549..., ok.
-    // Si no, lo insertamos. Esto fue exactamente tu bug: 5436... => 54936...
-    if (!n.startsWith('549')) {
-      n = '549' + n.slice(2);
-    }
+    // b) REMOVIDO: No agregar '9' automáticamente
+    // Meta/WhatsApp ya maneja el formato correcto internamente
+    // Si el número viene como 543624236020 (correcto), no debemos convertirlo a 5493624236020
+    // Solo validamos que sea E.164 válido
 
     // Validación final de E.164 sin '+'
     return isValidE164(n) ? n : null;
