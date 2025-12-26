@@ -10,7 +10,7 @@
 
 import express from 'express';
 import { fileURLToPath } from 'url';
-import { dirname, join } from 'path';
+import { dirname, resolve } from 'path';
 import { handleUserQuestion } from '../../whatsapp/src/orchestrator.js';
 import { ensureUnique } from '../../whatsapp/src/utils/idempotency.js';
 
@@ -51,7 +51,9 @@ waWebhookRouter.get('/webhook', (req, res) => {
   }
 
   // Si no hay parámetros de Meta, servir la página HTML del webhook
-  return res.sendFile(join(__dirname, '../../public/webhook.html'));
+  // Usar resolve para obtener ruta absoluta
+  const webhookPath = resolve(__dirname, '../../public/webhook.html');
+  return res.sendFile(webhookPath);
 });
 
 /**
