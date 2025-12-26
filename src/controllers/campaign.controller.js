@@ -5,6 +5,7 @@ import { TenantModel } from '../models/Tenant.js';
 import { runFordCampaign } from '../../mailer/campaign/core.js';
 import { runFordWhatsAppCampaign } from '../../mailer/campaign/whatsapp.js';
 import { normalizePhone, normalizeWhatsAppPhone, isValidE164 } from '../../mailer/utils/phone.js';
+import { transformCloudinaryUrlForEmail, validateAndNormalizeUrlForEmail } from '../../mailer/utils/cloudinary.js';
 
 const VECTOR_RAG_BASE_URL =
   process.env.VECTOR_RAG_SERVICE_URL ||
@@ -257,20 +258,80 @@ export async function sendCampaignCore({ tenantId, campaignId }) {
     ? segmento.imageUrlPromo 
     : [];
   
-  // Construir array de promos desde el segmento
+  // Construir array de promos desde el segmento con transformaciones para emails
   const promos = imageUrlsFromSegment
     .filter(url => url && typeof url === 'string')
-    .map(url => ({ imageUrl: url }));
+    .map(url => {
+      try {
+        // Transformar URL de Cloudinary optimizándola para emails
+        // - Ancho máximo 600px (estándar para emails)
+        // - Formato automático (Cloudinary elige el mejor formato compatible)
+        // - Calidad automática
+        const transformedUrl = transformCloudinaryUrlForEmail(url, {
+          width: 600,
+          format: 'f_jpg',
+          quality: 'q_auto',
+          enforceHttps: true,
+        });
+        return { imageUrl: transformedUrl };
+      } catch (error) {
+        console.warn('[CampaignCore] Error al transformar URL de imagen:', {
+          url,
+          error: error.message,
+          campaignId: campaign._id?.toString(),
+        });
+        // En caso de error, usar la URL original pero forzar HTTPS
+        return { imageUrl: url.startsWith('http://') ? url.replace('http://', 'https://') : url };
+      }
+    });
   
   // Si no hay URLs del segmento, usar fallback de la campaña
   if (promos.length === 0 && campaign.plantillaEmail?.imagenPromoUrl) {
-    promos.push({ imageUrl: campaign.plantillaEmail.imagenPromoUrl });
+    try {
+      const transformedUrl = transformCloudinaryUrlForEmail(
+        campaign.plantillaEmail.imagenPromoUrl,
+        {
+          width: 600,
+          format: 'f_jpg',
+          quality: 'q_auto',
+          enforceHttps: true,
+        }
+      );
+      promos.push({ imageUrl: transformedUrl });
+    } catch (error) {
+      console.warn('[CampaignCore] Error al transformar URL de imagen fallback:', {
+        url: campaign.plantillaEmail.imagenPromoUrl,
+        error: error.message,
+        campaignId: campaign._id?.toString(),
+      });
+      // En caso de error, usar la URL original pero forzar HTTPS
+      const fallbackUrl = campaign.plantillaEmail.imagenPromoUrl;
+      promos.push({
+        imageUrl: fallbackUrl.startsWith('http://') 
+          ? fallbackUrl.replace('http://', 'https://') 
+          : fallbackUrl
+      });
+    }
   }
   
-  console.log('[CampaignCore] Promos construidas desde segmento', {
+  // Log detallado de URLs procesadas (siempre mostrar resumen, detalle solo en debug)
+  const debugMode = process.env.DEBUG_EMAIL_IMAGES === 'true';
+  console.log('[CampaignCore] 🔍 URLs de promos procesadas', {
     campaignId: campaign._id?.toString(),
-    promosCount: promos.length,
-    imageUrlsFromSegment: imageUrlsFromSegment.length,
+    totalUrlsOriginales: imageUrlsFromSegment.length,
+    totalPromosValidas: promos.length,
+    ...(debugMode && {
+      promos: promos.map((promo, idx) => ({
+        index: idx,
+        original: imageUrlsFromSegment[idx] || campaign.plantillaEmail?.imagenPromoUrl,
+        optimized: promo.imageUrl,
+        isCloudinary: promo.imageUrl?.includes('res.cloudinary.com'),
+        hasTransformations: promo.imageUrl?.includes('/w_600') || promo.imageUrl?.includes('f_jpg'),
+        isHttps: promo.imageUrl?.startsWith('https://'),
+        urlLength: promo.imageUrl?.length,
+      })),
+    }),
+    timestamp: new Date().toISOString(),
   });
 
   const vendor = {
@@ -294,14 +355,36 @@ export async function sendCampaignCore({ tenantId, campaignId }) {
     );
   }
 
+  // Transformar brandLogoUrl para emails (logo más pequeño, formato optimizado)
+  let brandLogoUrl = process.env.CAMPAIGN_BRAND_LOGO_URL ||
+    'https://dummyimage.com/128x128/0b2a4a/ffffff&text=F';
+  
+  try {
+    brandLogoUrl = transformCloudinaryUrlForEmail(brandLogoUrl, {
+      width: 128,
+      height: 128,
+      format: 'f_jpg',
+      quality: 'q_auto',
+      enforceHttps: true,
+    });
+  } catch (error) {
+    console.warn('[CampaignCore] Error al transformar brandLogoUrl:', {
+      url: brandLogoUrl,
+      error: error.message,
+      campaignId: campaign._id?.toString(),
+    });
+    // En caso de error, forzar HTTPS si es necesario
+    if (brandLogoUrl.startsWith('http://')) {
+      brandLogoUrl = brandLogoUrl.replace('http://', 'https://');
+    }
+  }
+
   const campaignConfig = {
     subject:
       campaign.plantillaEmail?.asunto || campaign.nombreCampaña || 'Promos Ford',
     brandTitle,
     brandSubtitle: 'Centro de Ventas',
-    brandLogoUrl:
-      process.env.CAMPAIGN_BRAND_LOGO_URL ||
-      'https://dummyimage.com/128x128/0b2a4a/ffffff&text=F',
+    brandLogoUrl,
     dealershipName:
       process.env.CAMPAIGN_DEALERSHIP_NAME || 'Asesor Certificado',
     dealershipAddress:

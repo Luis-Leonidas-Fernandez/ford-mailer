@@ -19,6 +19,7 @@ import { enqueueEmail } from '../queue.js';
 import { config } from '../../config.js';
 import { renderFordPromos } from '../templates.js';
 import { buildWhatsAppLink } from '../utils/whatsapp.js';
+import { transformCloudinaryUrlForEmail } from '../utils/cloudinary.js';
 
 /**
  * Función utilitaria para pausas asíncronas
@@ -54,6 +55,66 @@ export async function runFordCampaign({
   const attempts = options.attempts ?? 3;
   const backoffMs = options.backoffMs ?? 15_000;
 
+  // Validar y sanitizar el array de promos antes de usarlo
+  // Esto asegura que todas las URLs estén correctamente formateadas y sean HTTPS
+  const sanitizedPromos = Array.isArray(promos)
+    ? promos
+        .filter(promo => promo && typeof promo === 'object')
+        .map(promo => {
+          // Asegurar que tenga imageUrl válido
+          if (!promo.imageUrl || typeof promo.imageUrl !== 'string') {
+            return null;
+          }
+          
+          // Re-validar y transformar URL si es necesario (doble verificación)
+          try {
+            const validatedUrl = transformCloudinaryUrlForEmail(promo.imageUrl, {
+              width: 600,
+              format: 'f_jpg',
+              quality: 'q_auto',
+              enforceHttps: true,
+            });
+            return { imageUrl: validatedUrl };
+          } catch (error) {
+            console.warn('[Email Campaign] Error al validar URL de promo:', {
+              campaignId,
+              url: promo.imageUrl,
+              error: error.message,
+            });
+            // Si falla, intentar al menos forzar HTTPS
+            const httpsUrl = promo.imageUrl.startsWith('http://')
+              ? promo.imageUrl.replace('http://', 'https://')
+              : promo.imageUrl;
+            return { imageUrl: httpsUrl };
+          }
+        })
+        .filter(promo => promo !== null) // Eliminar nulls
+    : [];
+
+  // Log detallado solo si hay diferencias o en modo debug
+  const debugMode = process.env.DEBUG_EMAIL_IMAGES === 'true';
+  const hasFilteredPromos = sanitizedPromos.length !== (promos?.length || 0);
+  
+  if (debugMode || hasFilteredPromos) {
+    console.log('[Email Campaign] 🔍 Promos sanitizadas', {
+      campaignId,
+      originalCount: promos?.length || 0,
+      sanitizedCount: sanitizedPromos.length,
+      filtered: (promos?.length || 0) - sanitizedPromos.length,
+      ...(debugMode && {
+        promos: sanitizedPromos.map((promo, idx) => ({
+          index: idx,
+          imageUrl: promo.imageUrl,
+          isCloudinary: promo.imageUrl?.includes('res.cloudinary.com'),
+          hasTransformations: promo.imageUrl?.includes('/w_600') || promo.imageUrl?.includes('f_jpg'),
+          isHttps: promo.imageUrl?.startsWith('https://'),
+          urlLength: promo.imageUrl?.length,
+        })),
+      }),
+      timestamp: new Date().toISOString(),
+    });
+  }
+
   console.log('[Email Campaign] Configuración de campaña', {
     campaignId,
     rps,
@@ -61,7 +122,9 @@ export async function runFordCampaign({
     attempts,
     backoffMs,
     contactsCount: Array.isArray(contacts) ? contacts.length : 'iterable',
-    promosCount: promos?.length || 0,
+    promosCount: sanitizedPromos.length,
+    promosOriginalCount: promos?.length || 0,
+    promosFiltered: (promos?.length || 0) - sanitizedPromos.length,
     timestamp: new Date().toISOString(),
   });
 
@@ -93,7 +156,7 @@ export async function runFordCampaign({
       dealershipName: campaign.dealershipName,
       dealershipAddress: campaign.dealershipAddress,
       contactPhone: campaign.contactPhone,
-      promos,
+      promos: sanitizedPromos, // Usar promos sanitizadas y validadas
       waLink,
       ctaLabel: campaign.ctaLabel,
       unsubscribeUrl,
