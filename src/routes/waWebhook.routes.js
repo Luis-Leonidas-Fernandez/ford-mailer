@@ -9,8 +9,13 @@
  */
 
 import express from 'express';
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
 import { handleUserQuestion } from '../../whatsapp/src/orchestrator.js';
 import { ensureUnique } from '../../whatsapp/src/utils/idempotency.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 export const waWebhookRouter = express.Router();
 
@@ -18,15 +23,14 @@ export const waWebhookRouter = express.Router();
  * GET /wa/webhook
  * Verificación de webhook por Meta/Facebook
  * Meta envía un challenge que debemos devolver si el token coincide
+ * Si no es una verificación, muestra la página HTML del webhook
  */
 waWebhookRouter.get('/webhook', (req, res) => {
   const mode = req.query['hub.mode'];
-  if (!mode) return res.status(200).send('ok');
   const token = req.query['hub.verify_token'];
   const challenge = req.query['hub.challenge'];
 
-
-
+  // Si es una verificación de Meta, manejar la verificación
   if (mode === 'subscribe' && token === process.env.WA_VERIFY_TOKEN) {
     console.log('[WA Webhook] Verificación OK', {
       mode,
@@ -35,13 +39,19 @@ waWebhookRouter.get('/webhook', (req, res) => {
     return res.status(200).send(challenge);
   }
 
-  console.warn('[WA Webhook] Verificación FALLIDA', {
-    mode,
-    tokenProvided: !!token,
-    expectedToken: !!process.env.WA_VERIFY_TOKEN,
-    timestamp: new Date().toISOString(),
-  });
-  return res.sendStatus(403);
+  // Si hay parámetros de Meta pero no coinciden, rechazar
+  if (mode) {
+    console.warn('[WA Webhook] Verificación FALLIDA', {
+      mode,
+      tokenProvided: !!token,
+      expectedToken: !!process.env.WA_VERIFY_TOKEN,
+      timestamp: new Date().toISOString(),
+    });
+    return res.sendStatus(403);
+  }
+
+  // Si no hay parámetros de Meta, servir la página HTML del webhook
+  return res.sendFile(join(__dirname, '../../public/webhook.html'));
 });
 
 /**
