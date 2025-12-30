@@ -32,8 +32,28 @@ export async function sendReminder({ to, subject, html, text, from, headers }) {
     return { messageId: 'dry_run', threadId: 'dry_run' };
   }
 
+  console.log('[Email] Enviando email', {
+    provider: config.provider,
+    to,
+    subject,
+    from: from || config.from,
+    timestamp: new Date().toISOString(),
+  });
+
   // Envío real utilizando el proveedor configurado
-  return await sendEmail({ to, subject, html, text, from, headers });
+  try {
+    const result = await sendEmail({ to, subject, html, text, from, headers });
+    console.log('[Email] Email enviado, resultado:', JSON.stringify(result, null, 2));
+    return result;
+  } catch (error) {
+    console.error('[Email] Error al enviar:', {
+      error: error.message,
+      name: error.name,
+      stack: error.stack,
+      fullError: JSON.stringify(error, Object.getOwnPropertyNames(error), 2),
+    });
+    throw error;
+  }
 }
 
 

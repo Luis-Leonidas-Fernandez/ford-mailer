@@ -7,10 +7,15 @@ import { runFordWhatsAppCampaign } from '../../mailer/campaign/whatsapp.js';
 import { normalizePhone, normalizeWhatsAppPhone, isValidE164 } from '../../mailer/utils/phone.js';
 import { transformCloudinaryUrlForEmail, validateAndNormalizeUrlForEmail } from '../../mailer/utils/cloudinary.js';
 
+const NODE_ENV = process.env.NODE_ENV || 'development';
+
 const VECTOR_RAG_BASE_URL =
   process.env.VECTOR_RAG_SERVICE_URL ||
   process.env.VECTOR_RAG_BASE_URL ||
-  'http://vector-rag:3000';
+  (NODE_ENV === 'production' 
+    ? 'http://vector-rag:3000'      // Producción
+    : 'http://vector-rag-app:3000'); // Desarrollo
+
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 function getTenantAndUserFromReq(req) {

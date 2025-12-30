@@ -47,6 +47,9 @@ const worker = new Worker('emails', async (job) => {
       jobId: job.id,
       campaignId,
       to: job.data.to,
+      result: JSON.stringify(result, null, 2), // Resultado completo
+      messageId: result?.messageId,
+      threadId: result?.threadId,
       duracionMs: duration,
       timestamp: new Date().toISOString(),
     });
@@ -59,6 +62,10 @@ const worker = new Worker('emails', async (job) => {
       campaignId,
       to: job.data.to,
       error: error.message,
+      errorName: error.name,
+      errorCode: error.code,
+      errorCause: error.cause ? JSON.stringify(error.cause, null, 2) : 'null',
+      fullError: JSON.stringify(error, Object.getOwnPropertyNames(error), 2),
       stack: error.stack,
       duracionMs: duration,
       timestamp: new Date().toISOString(),

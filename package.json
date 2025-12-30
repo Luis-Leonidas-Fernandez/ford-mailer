@@ -28,7 +28,15 @@
     "campaign:complete": "npm-run-all fix:clientes --parallel dev:worker enqueue:from-xlsx",
     "check:deps": "npm outdated",
     "check:env": "node scripts/check-env.js",
-    "ngrok": "node scripts/ngrok.js"
+    "ngrok": "node scripts/ngrok.js",
+    "docker:local:up": "docker-compose -f docker-compose.local.yml up",
+    "docker:local:up:d": "docker-compose -f docker-compose.local.yml up -d",
+    "docker:local:down": "docker-compose -f docker-compose.local.yml down",
+    "docker:local:down:v": "docker-compose -f docker-compose.local.yml down -v",
+    "docker:local:logs": "docker-compose -f docker-compose.local.yml logs -f",
+    "docker:local:restart": "docker-compose -f docker-compose.local.yml restart",
+    "docker:local:ps": "docker-compose -f docker-compose.local.yml ps",
+    "docker:local:build": "docker-compose -f docker-compose.local.yml build"
   },
   "keywords": [
     "mailer",

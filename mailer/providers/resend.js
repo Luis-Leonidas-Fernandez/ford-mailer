@@ -35,22 +35,61 @@ export async function sendWithResend({ to, subject, html, text, from, headers })
     throw new Error('Falta RESEND_API_KEY en el entorno');
   }
 
-  // Envía el email utilizando la API de Resend
-  const res = await resend.emails.send({
-    from: from || config.from,
+  // Log antes de enviar
+  console.log('[Resend] Preparando envío de email', {
     to,
     subject,
-    html,
-    text,
-    headers: headers || undefined, 
+    from: from || config.from,
+    hasHtml: !!html,
+    hasText: !!text,
+    htmlLength: html?.length || 0,
+    textLength: text?.length || 0,
+    hasHeaders: !!headers,
+    headersKeys: headers ? Object.keys(headers) : [],
+    timestamp: new Date().toISOString(),
   });
 
-  // Retorna los identificadores del mensaje enviado
-  // Nota: Resend usa el mismo ID para messageId y threadId
-  return {
-    messageId: res?.data?.id || 'unknown',
-    threadId: res?.data?.id || 'unknown',
-  };
+  try {
+    // Envía el email utilizando la API de Resend
+    const res = await resend.emails.send({
+      from: from || config.from,
+      to,
+      subject,
+      html,
+      text,
+      headers: headers || undefined, 
+    });
+
+    // Log de la respuesta completa
+    console.log('[Resend] RESPUESTA COMPLETA', {
+      success: true,
+      responseData: res?.data ? JSON.stringify(res.data, null, 2) : 'null',
+      responseError: res?.error ? JSON.stringify(res.error, null, 2) : 'null',
+      fullResponse: JSON.stringify(res, null, 2),
+      messageId: res?.data?.id || 'unknown',
+      timestamp: new Date().toISOString(),
+    });
+
+    // Retorna los identificadores del mensaje enviado
+    // Nota: Resend usa el mismo ID para messageId y threadId
+    return {
+      messageId: res?.data?.id || 'unknown',
+      threadId: res?.data?.id || 'unknown',
+    };
+  } catch (error) {
+    // Log detallado del error
+    console.error('[Resend] ERROR DETALLADO', {
+      errorName: error.name,
+      errorMessage: error.message,
+      errorStack: error.stack,
+      errorCause: error.cause ? JSON.stringify(error.cause, null, 2) : 'null',
+      fullError: JSON.stringify(error, Object.getOwnPropertyNames(error), 2),
+      to,
+      subject,
+      timestamp: new Date().toISOString(),
+    });
+    throw error;
+  }
 }
 
 
