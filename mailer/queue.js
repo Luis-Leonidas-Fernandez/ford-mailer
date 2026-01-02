@@ -16,15 +16,18 @@
 // mailer/queue.js
 import { Queue } from 'bullmq';
 import { config } from '../config.js';
+import { bullmqConnectionFromUrl } from './redis-connection.js';
+
+const connection = bullmqConnectionFromUrl(config.redisUrl);
 
 // Instancia de la cola de emails conectada a Redis
 export const emailQueue = new Queue('emails', {
-  connection: { url: config.redisUrl },
+  connection,
 });
 
 // Instancia de la cola de WhatsApp conectada a Redis
 export const whatsappQueue = new Queue('whatsapp', {
-  connection: { url: config.redisUrl },
+  connection,
 });
 
 /**

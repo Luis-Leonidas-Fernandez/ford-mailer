@@ -2,6 +2,7 @@
 import { Worker } from 'bullmq';
 import { waSendTemplate } from '../whatsapp/src/providers/whatsapp.js';
 import { config } from '../config.js';
+import { bullmqConnectionFromUrl } from './redis-connection.js';
 
 // Rate limit configurable desde env
 // ⚠️ IMPORTANTE: El limiter de BullMQ es POR WORKER (no global compartido)
@@ -9,6 +10,7 @@ import { config } from '../config.js';
 // - Para aumentar throughput: subir WHATSAPP_RATE_LIMIT_MAX_RPS, NO multiplicar workers
 // - Recomendación: correr UN SOLO whatsapp-worker en producción
 const maxPerSecond = Number(process.env.WHATSAPP_RATE_LIMIT_MAX_RPS || '2');
+const connection = bullmqConnectionFromUrl(config.redisUrl);
 
 const worker = new Worker(
   'whatsapp',
@@ -67,7 +69,7 @@ const worker = new Worker(
     }
   },
   {
-    connection: { url: config.redisUrl },
+    connection,
     concurrency: 1, // 1 job a la vez (procesamiento secuencial)
     limiter: {
       max: maxPerSecond, // Mensajes por segundo POR WORKER (rate por worker, no global)

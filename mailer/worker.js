@@ -16,6 +16,9 @@
 import { Worker } from 'bullmq';
 import { sendReminder } from './index.js';
 import { config } from '../config.js';
+import { bullmqConnectionFromUrl } from './redis-connection.js';
+
+const connection = bullmqConnectionFromUrl(config.redisUrl);
 
 console.log('[Email Worker] ========================================');
 console.log('[Email Worker] INICIANDO WORKER', {
@@ -72,7 +75,7 @@ const worker = new Worker('emails', async (job) => {
     });
     throw error;
   }
-}, { connection: { url: config.redisUrl } });
+}, { connection });
 
 // Evento disparado cuando un trabajo se completa exitosamente
 worker.on('completed', (job) => {
