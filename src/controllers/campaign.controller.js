@@ -388,7 +388,7 @@ export async function sendCampaignCore({ tenantId, campaignId }) {
     subject:
       campaign.plantillaEmail?.asunto || campaign.nombreCampaña || 'Promos Ford',
     brandTitle,
-    brandSubtitle: 'Centro de Ventas',
+    brandSubtitle: 'Cristian Sosa Asesor de Ventas',
     brandLogoUrl,
     dealershipName:
       process.env.CAMPAIGN_DEALERSHIP_NAME || 'Asesor Certificado',
