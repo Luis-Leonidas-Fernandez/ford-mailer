@@ -9,6 +9,3 @@ docker compose up -d redis worker api
 ```bash
 docker compose down
 ```
-
-
-
